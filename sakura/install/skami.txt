@@ -137,3 +137,31 @@ export PS1="(chroot) $PS1"
 2014.11.5 Wed.
 
 emerge -av sudo
+useradd -m -G users,wheel -s /bin/bash tatsuya
+passwd tatsuya
+visudo
+	tatsuya ALL=(ALL) ALL
+exit
+
+sudoedit /etc/ssh/sshd_config
+	PermitRootLogin no
+sudo /etc/init.d/sshd restart
+
+ローカルで
+scp ~/.ssh/id_rsa.pub tatsuya@skami.iocikun.jp:~/myhost.pub
+ssh tatsuya@skami.iocikun.jp "cat ~/myhost.pub >> ~/.ssh/authorized_keys"
+ssh tatsuya@skami.iocikun.jp "cat ~/.ssh/authorized_keys"
+
+sudo emerge --sync
+sudo emerge -av tmux
+
+sudoedit /etc/ssh/sshd_config
+
+Port 12345
+
+tmux
+sudo emerge -avu --deep --newuse world
+
+TODO
+
+* iptables
