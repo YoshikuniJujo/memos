@@ -1,0 +1,139 @@
+2014.11.4 Tue.
+
+www26389ue.sakura.ne.jp
+49.212.203.163
+255.255.254.0
+49.212.202.1
+210.224.163.3
+210.224.163.4
+
+さくらにgentooのisoイメージをアップする(sftpを使用)。
+isoイメージから起動。
+ifconfig eth0 49.212.203.163 netmask 255.255.254.0
+route add default gw 49.212.202.1
+echo "nameserver 210.224.163.3" >> /etc/resolv.conf
+passwd
+/etc/init.d/sshd start
+
+ローカルから
+ssh skami.iocikun.jp
+
+parted /dev/vda
+
+1049kB 1000MB 999MB ext4 boot
+1000MB 5000MB 3999MB linux-swap(v1) swap
+5000MB 107GB 102GB ext4 root
+
+mklabel gpt
+mkpart 
+boot
+ext4
+1m
+1g
+mkpart
+swap
+linux-swap
+1g
+5g
+mkpart
+root
+ext4
+5g
+-1
+
+mkfs.ext4 /dev/vda1
+mkfs.ext4 /dev/vda3
+
+mkswap /dev/vda2
+swapon /dev/vda2
+
+mount /dev/vda3 /mnt/gentoo
+mkdir /mnt/gentoo/boot
+mount /dev/vda1 /mnt/gentoo/boot
+
+/etc/init.d/ntp-client start
+
+links http://www.gentoo.org/main/en/mirrors.xml
+Internet Initiative Japan (http)*
+releases/x86/autobuilds/current-state3-i686/state3-i686-20141028.tar.bz2
+releases/x86/autobuilds/current-state3-i686/state3-i686-20141028.tar.bz2.DIGESTS
+cat state3-i686-20141028.tar.bz2.DIGESTS
+sha512sum state3-i686-20141028.tar.bz2
+sha512sum -c state3-i686-20141028.tar.bz2.DIGESTS
+tar xvjpf state3-i686-20141028.tar.bz2
+
+links http://www.gentoo.org/main/en/mirrors.xml
+Internet Initiative Japan (http)*
+snapshots/portage-latest.tar.bz2
+snapshots/portage-latest.tar.bz2.md5sum
+md5sum -c portage-latest.tar.bz2.md5sum
+tar xvjf /mnt/gentoo/portage-latest.tar.bz2 -C /mnt/gentoo/usr
+mirrorselect -i -o >> /mnt/gentoo/etc/portage/make.conf
+mirrorselect -i -r -o >> /mnt/gentoo/etc/portage/make.conf
+cp -L /etc/resolv.conf /mnt/gentoo/etc/
+mount -t proc none /mnt/gentoo/proc
+mount --rbind /dev /mnt/gentoo/dev
+chroot /mnt/gentoo /bin/bash
+env-update
+source /etc/profile
+export PS1="(chroot) $PS1"
+emerge --sync
+emerge -av vim
+vi /etc/locale.gen
+locale-gen
+emerge -av gentoo-sources
+cd /usr/src/linux
+make menuconfig
+
+[ ] 64-bit kernel
+Processor type and features -->
+	Processor family (Core 2/newer Xeon)
+Device Drivers -->
+	Generic Driver Options -->
+		Maintain a devtmpfs filesystem to mount at /dev
+	Virtio drivers -->
+		<*> PCI driver for virtio devices
+		<*> Platform bus driver for memory mapped virtio devices
+	Block devices -->
+		<*> Virtio block driver
+	Network device support -->
+		-*- Network core driver support
+			<*> Virtio network driver
+	Character devices -->
+		< > virtio console
+		<*> Hardware Random Number Generator Core support
+			<*> VirtiIO Random Number Generator support
+File Systems
+	< > Second extended fs support
+	<*> The Extended 4 (ext4) filesystem
+
+vi /etc/fstab
+vi /etc/conf.d/net
+ln -s net.lo /etc/init.d/net.eth0
+rc-update add net.eth0 default
+rc-update add sshd default
+emerge -av metalog
+rc-update add metalog default
+emerge -av cronie
+rc-update add cronie default
+emerge -av mlocate
+emerge -av grub
+grub2-install --force /dev/vda
+grub2-mkconfig -o /boot/grub/grub.cfg
+passwd
+
+* 再開
+
+swapon /dev/vda2
+mount /dev/vda3 /mnt/gentoo
+mount /dev/vda1 /mnt/gentoo/boot
+mount -t proc none /mnt/gentoo/proc
+mount --rbind /dev /mnt/gentoo/dev
+chroot /mnt/gentoo /bin/bash
+env-update
+source /etc/profile
+export PS1="(chroot) $PS1"
+
+2014.11.5 Wed.
+
+emerge -av sudo
