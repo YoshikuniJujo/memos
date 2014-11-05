@@ -1,0 +1,16 @@
+TODO
+====
+
+* iptables
+	+ カーネルの設定
+		- ip_conntrack_ftp
+		- nf_conntrack_ftp
+* zsh
+* haskell
+* mail server
+
+memo
+====
+
+	iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+	iptables -A INPUT -p tcp --dport 21 -d 49.212.203.163 -j ACCEPT

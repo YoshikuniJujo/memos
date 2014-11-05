@@ -162,6 +162,11 @@ Port 12345
 tmux
 sudo emerge -avu --deep --newuse world
 
-TODO
+sudo emerge -av iptables
 
-* iptables
+vi iptables.sh
+chmod +x iptables.sh
+./iptables.sh
+
+sudo emerge -av ncftp
+sudo emerge -av w3m
