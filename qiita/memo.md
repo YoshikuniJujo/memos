@@ -17,6 +17,8 @@
 * PNGファイルの分析、展開、作成
 * .bz2の分析、展開、圧縮
 * .xzの分析、展開、圧縮
+* free monad
+* operational monad
 * Extensible Effect
 * Extensible Effectのわくぐみでconduitは可能か
 
