@@ -37,6 +37,10 @@ data FreeList a
 	| JoinL [FreeList a]
 	deriving Show
 
+removePureL :: FreeList (FreeList a) -> FreeList a
+removePureL (PureL m) = m
+removePureL (JoinL tm) = JoinL $ removePureL <$> tm
+
 instance Functor FreeList where
 	f `fmap` PureL x = PureL $ f x
 	f `fmap` JoinL tx = JoinL $ fmap f <$> tx
@@ -66,3 +70,33 @@ instance Applicative FreeMaybe where
 instance Monad FreeMaybe where
 	PureM x >>= f = f x
 	JoinM tx >>= f = JoinM $ (f =<<) <$> tx
+
+exampleIO :: Int -> IO Int
+exampleIO n = print n >> return (n + 1)
+
+replicate1Bool :: Bool -> [] Bool
+replicate1Bool = replicate 1
+
+replicate2Bool :: Bool -> [] Bool
+replicate2Bool = replicate 2
+
+replicate3Bool :: Bool -> [] Bool
+replicate3Bool = replicate 3
+
+toFree1 :: Functor t => t a -> Free t a
+toFree1 = Join . fmap Pure
+
+toFree2 :: Functor t => t (t a) -> Free t a
+toFree2 = removePure . fmap toFree1 . toFree1
+
+toFree3 :: Functor t => t (t ( t a)) -> Free t a
+toFree3 = removePure . fmap toFree1 . toFree2
+
+toFreeL1 :: [a] -> FreeList a
+toFreeL1 = JoinL . fmap PureL
+
+toFreeL2 :: [[a]] -> FreeList a
+toFreeL2 = removePureL . fmap toFreeL1 . toFreeL1
+
+toFreeL3 :: [[[a]]] -> FreeList a
+toFreeL3 = removePureL . fmap toFreeL1 . toFreeL2
