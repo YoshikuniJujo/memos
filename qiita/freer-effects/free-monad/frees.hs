@@ -54,6 +54,9 @@ instance Monad FreeList where
 	PureL x >>= f = f x
 	JoinL tx >>= f = JoinL $ (f =<<) <$> tx
 
+fromList :: [a] -> FreeList a
+fromList = JoinL . fmap PureL
+
 data FreeMaybe a
 	= PureM a
 	| JoinM [FreeMaybe a]
@@ -72,7 +75,7 @@ instance Monad FreeMaybe where
 	JoinM tx >>= f = JoinM $ (f =<<) <$> tx
 
 exampleIO :: Int -> IO Int
-exampleIO n = print n >> return (n + 1)
+exampleIO n = putStrLn ("n = " ++ show n) >> return (n + 1)
 
 replicate1Bool :: Bool -> [] Bool
 replicate1Bool = replicate 1
@@ -100,3 +103,11 @@ toFreeL2 = removePureL . fmap toFreeL1 . toFreeL1
 
 toFreeL3 :: [[[a]]] -> FreeList a
 toFreeL3 = removePureL . fmap toFreeL1 . toFreeL2
+
+runIO :: Free IO a -> IO a
+runIO (Pure x) = return x
+runIO (Join act) = act >>= runIO
+
+runMonad :: Monad m => Free m a -> m a
+runMonad (Pure x) = return x
+runMonad (Join m) = m >>= runMonad
