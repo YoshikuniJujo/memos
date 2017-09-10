@@ -123,6 +123,76 @@ Join [Join [Join [Join [Pure True]]]] :: Free [] Bool
 値はネストしても、型はネストしない。
 このように、値はネストしたままで、関数joinと同様の効果を、得ることができる。
 
+### リストの例
+
+リストはファンクタなので、Freeモナドによる変換が可能だ。
+ここでは、対話環境で表示できるように、リスト専用のデータ型を用意して、
+それを使ってみよう。
+つぎのデータ型を定義する。
+ファイルfreeList.hsを作成し、つぎのように定義しよう。
+
+```hs:freeList.hs
+data FreeList a
+        = Pure L a
+        | JoinL [FreeList a]
+        deriving Show
+```
+
+整数をたし算、または、かけ算で、つぎつぎにつないでいったときの、
+すべての組み合わせをもとめることを考える。
+つぎのような関数を演算子(>>=)でつないでいけばいい。
+ファイルfreeList.hsに、つぎの関数を追加しよう。
+
+```hs:freeList.hs
+mulAdd :: Integer -> Integer -> [Integer]
+mulAdd y x = [x + y, x * y]
+```
+
+まずは、ふつうに、リストモナドとして試してみる。
+
+```hs
+> :load freeList.hs
+> return 5 >>= mulAdd 3 >>= mulAdd 8 >>= mulAdd 11
+[27,176,75,704,34,253,131,1320]
+```
+
+これは、つぎのような計算をしたということだ。
+
+```hs
+[
+5 + 3 + 8 + 11, (5 + 3 + 8) * 11, (5 + 3) * 8 + 11, (5 + 3) * 8 * 11,
+5 * 3 + 8 + 11, (5 * 3 + 8) * 11, 5 * 3 * 8 + 11, 5 * 3 * 8 * 11
+]
+```
+
+おなじことを、Freeモナドで試してみる。
+まずは、データ型FreeListをFunctorクラスのインスタンスにする。
+
+```hs:freeList.hs
+instance Functor FreeList where
+        f `fmap` PureL x = PureL $ f x
+	f `fmap` JoinL xs = JoinL $ fmap f `map` xs
+```
+
+PureLに対しては、なかの値xに関数fを適用すればいい。
+JoinLに対しては、関数fmapをリストの要素すべてに、再帰的に、適用している。
+おなじように、Applicativeクラスのインスタンスにする。
+
+```hs
+instance Applicative FreeList where
+        pure = PureL
+	PureL f <*> mx = f <$> mx
+	JoinL fs <*> mx = JoinL $ (<*> mx) `map` fs
+```
+
+クラス関数の定義の、うえの2行については、だいたいわかるだろう。
+3行目はリストfsの要素に対して(<\*> mx)を、再帰的に、適用している。
+Monadクラスのインスタンスにする。
+
+### IOの例
+
+### 状態モナドの例
+
 Freeモナドで、いろいろなモナドを作る
 ------------------------------------
 
