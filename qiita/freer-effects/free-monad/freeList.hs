@@ -16,3 +16,10 @@ instance Applicative FreeList where
 	pure = PureL
 	PureL f <*> mx = f <$> mx
 	JoinL fs <*> mx = JoinL $ (<*> mx) `map` fs
+
+instance Monad FreeList where
+	PureL x >>= f = f x
+	JoinL xs >>= f = JoinL $ (f =<<) `map` xs
+
+mulAddF :: Integer -> Integer -> FreeList Integer
+mulAddF y x = JoinL [PureL $ x + y, PureL $ x * y]

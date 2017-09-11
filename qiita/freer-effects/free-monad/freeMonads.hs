@@ -11,7 +11,7 @@ data Free t a
 
 instance Functor t => Functor (Free t) where
 	f `fmap` Pure x = Pure $ f x
-	f `fmap` Join tx = Join $ (f <$>) <$> tx
+	f `fmap` Join tx = Join $ fmap f <$> tx
 
 instance Functor t => Applicative (Free t) where
 	pure = Pure
