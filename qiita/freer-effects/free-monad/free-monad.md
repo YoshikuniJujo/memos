@@ -383,6 +383,8 @@ instance ...
 ファイルfreeMonads.hsを作成して、つぎのような定義を追加する。
 
 ```hs:freeMonads.hs
+import Free
+
 data Reader e a = Reader (e -> a)
 
 instance Functor (Reader e) where
@@ -407,6 +409,28 @@ runReader m e = case m of
 ```
 
 ### Writerモナド
+
+つぎにWriterモナドを定義する。
+
+```hs:freeMonads.hs
+data Writer w a = Writer w a
+
+tell :: w -> Free (Writer w) ()
+tell w = Join . Writer w $ Pure ()
+
+runWriter :: Monoid w => Free (Writer w) a -> (a, w)
+runWriter = \case
+        Pure x -> (x, mempty)
+        Join (Writer w m) -> second (w <>) $ runWriter m
+```
+
+試してみる。
+
+```hs
+> :load freeMonads.hs
+> runWriter $ do tell "x = 8\n"; x <- return 8; tell "y = 5\n"; y <- return 5; tell $ "x * y = " ++ show (x * y):return $ x * y
+(40,"x = 8\ny = 5\nx * y = 40")
+```
 
 ### ReaderとWriterの両方
 
