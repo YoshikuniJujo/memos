@@ -245,10 +245,130 @@ JoinL[JoinL [PureL 34, PureL 253],JoinL[ PureL 131,PureL 1320]]]
 
 ### IOの例
 
+入出力の例をみてみよう。
+freeIO.hsを作成し、つぎのように定義する。
+
+```hs:freeIO.hs
+data FreeIO a
+        = PureIO a
+	| JoinIO (IO (FreeIO a))
+```
+
+ファンクタ、アプリカティブ、モナドの定義を追加する。
+
+```hs:freeIO.hs
+instance Functor FreeIO where
+        f `fmap` PureIO x = PureIO $ f x
+        f `fmap` JoinIO m = JoinIO $ fmap f <$> m
+
+instance Applicative FreeIO where
+        pure = PureIO
+        PureIO f <*> mx = f <$> mx
+        JoinIO mf <*> mx = JoinIO $ (<*> mx) <$> mf
+
+instance Monad FreeIO where
+        PureIO x >>= f = f x
+        JoinIO mx >>= f = JoinIO $ (f =<<) <$> mx
+```
+
+入出力の例として、引数の整数を表示して、
+それをカウントアップしてかえす機械を考える。
+まずは、通常のIOについて試す。
+ファイルfreeIO.hsに、つぎの関数を追加する。
+
+```hs:freeIO.hs
+count :: Integer -> IO Integer
+count n = putStrLn ("n = " ++ show n) >> return (n + 1)
+```
+
+対話環境で試してみよう。
+
+
+```hs
+> :load freeIO.hs
+> count 8 >>= count >>= count >>= count
+n = 8
+n = 9
+n = 10
+n = 11
+12
+```
+
+おなじ機械のFreeIO型バージョンを書く。
+
+```hs:freeIO.hs
+countF :: Integer -> FreeIO Integer
+countF n = JoinIO $ putStrLn ("n = " ++ show n) >> return (PureIO $ n + 1)
+```
+
+FreeIO型の値は、そのままでは表示も実行もできないので、関数runIOを定義する。
+ここでは、LambdaCase拡張を使っている。
+
+```hs:freeIO.hs
+runIO :: FreeIO a -> IO a
+runIO = \case
+        PureIO x -> return x
+        JoinIO m -> m >>= runIO
+```
+
+対話環境で試してみよう。
+
+```hs
+> :reload
+> action = countF 8 >>= countF >>= countF >>= countF
+> runIO action
+n = 8
+n = 9
+n = 10
+n = 11
+12
+```
+
+FreeIO型の値はIO型の値が入れ子になっている状態であり、
+それぞれの入出力はまだ合成されていない。
+それを示すために、関数runWithを定義する。
+
+```hs:freeIO.hs
+runWith :: FreeIO a -> IO b -> IO a
+runWith fio act = case fio of
+        PureIO x -> return x
+        JoinIO m -> act >> m >>= (`runWith` act)
+```
+
+対話環境で試す。
+
+```hs
+> :reload
+> action = countF 8 >>= countF >>= countF >>= countF
+> action `runWith` putStrLn "hello"
+hello
+n = 8
+hello
+n = 9
+hello
+n = 10
+hello
+n = 11
+12
+```
+
+FreeIO型では、それぞれの入出力がばらばらで保管されているため、
+このように、あいだにほかの入出力をはさむことができる。
+
 ### 状態モナドの例
 
 Freeモナドで、いろいろなモナドを作る
 ------------------------------------
+
+### Readerモナド
+
+### Writerモナド
+
+### ReaderとWriterの両方
+
+#### ReaderとWriterの意味論をそのままに
+
+#### ReaderとWriterで状態モナドとする
 
 ```hs:hoge.hs
 hello = hoge
