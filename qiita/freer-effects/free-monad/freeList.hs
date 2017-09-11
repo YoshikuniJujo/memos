@@ -23,3 +23,7 @@ instance Monad FreeList where
 
 mulAddF :: Integer -> Integer -> FreeList Integer
 mulAddF y x = JoinL [PureL $ x + y, PureL $ x * y]
+
+runList :: FreeList a -> [a]
+runList (PureL x) = [x]
+runList (JoinL xs) = runList `concatMap` xs

@@ -178,7 +178,7 @@ PureLに対しては、なかの値xに関数fを適用すればいい。
 JoinLに対しては、関数fmapをリストの要素すべてに、再帰的に、適用している。
 おなじように、Applicativeクラスのインスタンスにする。
 
-```hs
+```hs:freeList.hs
 instance Applicative FreeList where
         pure = PureL
 	PureL f <*> mx = f <$> mx
@@ -188,6 +188,60 @@ instance Applicative FreeList where
 クラス関数の定義の、うえの2行については、だいたいわかるだろう。
 3行目はリストfsの要素に対して(<\*> mx)を、再帰的に、適用している。
 Monadクラスのインスタンスにする。
+
+```hs:freeList.hs
+instance Monad FreeList where
+	PureL x >>= f = f x
+	JoinL xs >>= f = JoinL $ (f =<<) `map` xs
+```
+
+(>>=)を再帰的に適用している。
+ここで、リストという構造に対しては、関数mapというファンクタ的な演算を、
+使用していることに注意しよう。
+それによって、リストはネストしてしまう。
+そのリストのネストはJoinLによって、型としては解消されている。
+
+リストモナドについて定義したのと、おなじ関数を型FreeListについても、
+定義してみよう。
+
+```hs:freeList.hs
+mulAddF :: Integer -> Integer -> FreeList Integer
+mulAddF y x = JoinL [PureL $ x + y, PureL $ x * y]
+```
+
+対話環境で試してみる。
+
+```hs
+> :reload
+> return 5 >>= mulAddF 3 >>= mulAddF 8 >>= mulAddF 11
+JoinL [JoinL [JoinL [PureL 27,PureL 176],JoinL [PureL 75,PureL 704]],
+JoinL[JoinL [PureL 34, PureL 253],JoinL[ PureL 131,PureL 1320]]]
+> :type it
+it :: FreeList Integer
+```
+
+値としては、おこなった操作の手順を反映した、ネストしたリストとなっているが、
+型としてはネストのない型となっている。
+
+FreeList型からリスト型の値にするには、リストに対する演算子(=<<)である
+concatMapを使えばいい。
+
+```hs:freeList.hs
+runList :: FreeList a -> [a]
+runList (PureL x) = [x]
+runList (JoinL xs) = runList `concatMap` xs
+```
+
+試してみよう。
+
+```hs
+> :reload
+> return 5 >>= mulAddF 3 >>= mulAddF 8 >>= mulAddF 11
+JoinL [JoinL [JoinL [PureL 27,PureL 176],JoinL [PureL 75,PureL 704]],
+JoinL[JoinL [PureL 34, PureL 253],JoinL[ PureL 131,PureL 1320]]]
+> runList it
+[27,176,75,704,34,253,131,1320]
+```
 
 ### IOの例
 
