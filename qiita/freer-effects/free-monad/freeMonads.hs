@@ -97,4 +97,4 @@ getModify2 g = Join . State2 $ \s -> (Pure s, g s)
 runState2 :: Free (State2 s) a -> s -> (a, s)
 runState2 m s = case m of
 	Pure x -> (x, s)
-	Join (State f) -> let (m', s') = f s in runState2 m' s'
+	Join (State2 f) -> let (m', s') = f s in runState2 m' s'
