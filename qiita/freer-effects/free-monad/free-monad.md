@@ -96,7 +96,7 @@ Freeモナドとは
 もとの型がファンクタであれば、それを変換してモナドにすることができるデータ型。
 つぎのような定義となる。
 
-```hs:freeMonad.hs
+```hs
 data Free t a
         = Pure a
         | Join (t (Free t a))
@@ -355,12 +355,56 @@ n = 11
 FreeIO型では、それぞれの入出力がばらばらで保管されているため、
 このように、あいだにほかの入出力をはさむことができる。
 
-### 状態モナドの例
-
 Freeモナドで、いろいろなモナドを作る
 ------------------------------------
 
+### Freeモナドを定義
+
+データ型Freeを定義しておこう。
+ファイルFree.hsを作成し、つぎのように定義する。
+
+```hs:Free.hs
+module Free (Free(..)) where
+
+data Free t a
+        = Pure a
+        | Join t (t (Free t a))
+
+instance ...(あとで書く)
+
+instance ...
+
+instance ...
+```
+
 ### Readerモナド
+
+まずはFreeモナドを使って、Readerモナドを定義してみよう。
+ファイルfreeMonads.hsを作成して、つぎのような定義を追加する。
+
+```hs:freeMonads.hs
+data Reader e a = Reader (e -> a)
+
+instance Functor (Reader e) where
+        f `fmap` Reader k = Reader $ f . k
+
+ask :: Free (Reader e) e
+ask = Join $ Reader Pure
+
+runReader :: Free (Reader e) a -> e -> a
+runReader m e = case m of
+        Pure x -> x
+        Join (Reader k) -> runReader (k e) e
+```
+
+試してみる。
+
+```hs
+> :load freeMonads.hs
+> :module + Data.Char
+> (`runReader` 100) $ do x <- ask; return $ chr x
+'d'
+```
 
 ### Writerモナド
 
