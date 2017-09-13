@@ -90,7 +90,9 @@ Freer Effectsでの改善点
 目次
 ----
 
-1. Freeモナドの概要
+0. 導入
+
+1. [Freeモナドの概要](free-monad/free-monad.md)
 	* Freeモナドとは
 	* FreeモナドでReaderモナド、Writerモナドを構成する
 2. FreeモナドとCoyoneda
