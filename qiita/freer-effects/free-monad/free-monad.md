@@ -434,11 +434,99 @@ runWriter = \case
 
 ### ReaderとWriterの両方
 
+ReaderとWriterの両方の機能をもつモナドを作ってみよう。
+ファイルreaderWriter.hsを作成し、つぎのように定義する。
+
+```hs:readerWriter.hs
+import Control.Arrow
+import Data.Monoid
+
+import Free
+
+data RW e w a
+        = Reader (e -> a)
+        | Writer w a
+
+instance Functor (RW e w) where
+        f `fmap` Reader k = Reader $ f . k
+	f `fmap` Writer w x = Writer w $ f x
+
+ask :: Free (RW e w) e
+ask = Join $ Reader Pure
+
+tell :: w -> Free (RW e w) ()
+tell w = Join . Writer w $ Pure ()
+```
+
+例として、つぎの式を定義する。
+
+```hs:readerWriter.hs
+sample :: Free (RW String String) (String, String)
+sample = do
+        x <- ask
+        tell $ "I say " ++ x ++ ".\n"
+        y <- ask
+        tell $ "You say Good-bye!\n"
+        return (x, y)
+```
+
 #### ReaderとWriterの意味論をそのままに
+
+さて、まずはReaderとWriterの、もともとの意味論を、
+そのままにして計算してみよう。
+askは環境から値を読み出し、tellはログに値を記録する。
+
+```hs:readerWriter.hs
+runRW :: Monoid w => Free (RW e w) a -> e -> (a, w)
+runRW m e = case m of
+        Pure x -> (x, mempty)
+        Join (Reader k) -> runRW (k e) e
+        Join (Writer w m') -> second (w <>) $ runRW m' e
+```
+
+サンプルの式の評価を、試してみよう。
+
+```hs
+> :load readerWriter.hs
+> sample `runRW` "hello"
+(("hello","hello"),"I say hello.\nYou say Good-bye!\n")
+```
 
 #### ReaderとWriterで状態モナドとする
 
+さて、ここで「『読み出し』と『書き込み』ができるのなら状態モナドが作れるのでは」
+と、思うだろう。
+それは正しい。
+ReaderとWriterから状態モナドを作ってみる。
+
 ```hs:hoge.hs
-hello = hoge
-hige = hoge
+runStateRW :: Free (RW s s) a -> s -> (a, s)
+runStateRW m s = case m of
+        Pure x -> (x, s)
+        Join (Reader k) -> runStateRW (k s) s
+        Join (Writer s' m') -> runStateRW m' s'
 ```
+
+サンプルの式の評価を、試してみよう。
+
+```hs
+> :reload
+> sample `runStateRW` "hello"
+(("hello","I say hello.\n"),"You say Good-bye!\n")
+```
+
+#### おなじモナドの例が、2通りに
+
+ひとつの例sampleが、runRWで評価されるのと、runStateRWで評価されるのとで、
+異なる結果となった。
+これは、Freeモナドでは、バインド(>>=)の意味の決定を、
+モナドを合成しているときではなく、後回しにすることができるということだ。
+実際の計算をする代わりに、データ構造に保管していると考えることができる。
+
+まとめ
+------
+
+Freeモナドについて見てきた。
+Freeモナドは、ファンクタであるようなデータ構造をモナドに変換する仕組みだ。
+バインド(>>=)の動作は、データの構造として保管される。
+そのため、モナドの合成のあとから、バインドの動作を決定することができる。
