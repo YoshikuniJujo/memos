@@ -32,17 +32,17 @@ join = (>>= id)
 ```
 
 Freeモナドを理解するうえで、モナドがfmap, pure, joinのみっつで表現される
-という側面をおさえておくことが、助けとなる。
+という側面をおさえておくことも、助けとなるだろう。
 モナドとは、つぎのような操作ができる文脈mと言える。
 
-* 値に文脈をつけることができる (pure :: a -> m a)
-* 文脈のなかの値に関数を適用できる (fmap :: (a -> b) -> m a -> m b)
-* 二重になった文脈を一段の文脈にほどくことができる (join :: m (m a) -> m a)
+* 値に、文脈をつけることができる (pure :: a -> m a)
+* 文脈のなかの値に、関数を適用できる (fmap :: (a -> b) -> m a -> m b)
+* 二重になった文脈を、一段の文脈にほどくことができる (join :: m (m a) -> m a)
 
 ファンクタからモナドへ
 -----------------------
 
-ファンクタとは、つぎのような関数を持つ型fのことである。
+ファンクタとは、つぎのような関数をもつ型fのことである。
 
 ```hs
 fmap :: (a -> b) -> f a -> f b
@@ -88,7 +88,7 @@ join :: m (m a) -> m a
 [[(2,'b',False)],[(2,'b',True)]],[[(2,'c',False)],[(2,'c',True)]]]]
 ```
 
-ファンクタのほうの演算では、リストがネストしてしまっている。
+ファンクタのほうの演算では、リストがネストしていってしまう。
 
 Freeモナドとは
 --------------
@@ -133,7 +133,7 @@ Join [Join [Join [Join [Pure True]]]] :: Free [] Bool
 
 ```hs:freeList.hs
 data FreeList a
-        = Pure L a
+        = PureL a
         | JoinL [FreeList a]
         deriving Show
 ```
@@ -224,7 +224,7 @@ it :: FreeList Integer
 型としてはネストのない型となっている。
 
 FreeList型からリスト型の値にするには、リストに対する演算子(=<<)である
-concatMapを使えばいい。
+関数concatMapを使えばいい。
 
 ```hs:freeList.hs
 runList :: FreeList a -> [a]
@@ -303,6 +303,7 @@ countF n = JoinIO $ putStrLn ("n = " ++ show n) >> return (PureIO $ n + 1)
 
 FreeIO型の値は、そのままでは表示も実行もできないので、関数runIOを定義する。
 ここでは、LambdaCase拡張を使っている。
+ファイルの先頭に{-# LANGUAGE LambdaCase #-}を追加しよう。
 
 ```hs:freeIO.hs
 runIO :: FreeIO a -> IO a
@@ -370,12 +371,23 @@ data Free t a
         = Pure a
         | Join t (t (Free t a))
 
-instance ...(あとで書く)
+instance Functor t => Functor (Free t) where
+        f `fmap` Pure x = Pure $ f x
+	f `fmap` Join tx = Join $ fmap f <$> tx
 
-instance ...
+instance Functor t => Applicative (Free t) where
+        pure = Pure
+        Pure f <*> m = f <$> m
+        Join tf <*> m = Join $ (<*> m) <$> tf
 
-instance ...
+instance Functor t => Monad (Free t) where
+        Pure x >>= f = f x
+        Join tx >>= f = Join $ (f =<<) <$> tx
 ```
+
+型FreeLやFreeIOと、ほぼ、おなじ定義だ。
+だいたいの感じとしては、Pureならそのまま適用、
+Joinなら再帰的に適用していく、といった定義になっている。
 
 ### Readerモナド
 
@@ -399,6 +411,12 @@ runReader m e = case m of
         Join (Reader k) -> runReader (k e) e
 ```
 
+関数askでは、Pureによって、Reader e aのaのところを、
+Free (Reader e) e型の値としている。
+さらに、値構築子JoinによってFree (Reader e) e型の値を構成する。
+関数runReaderでは値構築子Readerのもつ(e -> Free (Reader e) a)型の値を、
+値eに適用することでFree (Reader e) a型の値を取り出し、
+それに対して関数runReaderを再帰的に適用している。
 試してみる。
 
 ```hs
@@ -424,6 +442,11 @@ runWriter = \case
         Join (Writer w m) -> second (w <>) $ runWriter m
 ```
 
+関数tellでは、Pure ()によってWriter w aの、aのところをFree (Writer w) ()型と
+している。
+関数runWriterでは、値構築子Writerのもつ、ふたつめの値であるmに対して、
+関数runWriterを再帰的に適用し、その結果であるタプルの、ふたつめの値に対して、
+値構築子Writerの、ひとつめの値であるwを追加している。
 試してみる。
 
 ```hs
@@ -492,6 +515,9 @@ runRW m e = case m of
 (("hello","hello"),"I say hello.\nYou say Good-bye!\n")
 ```
 
+式askのかえす値は、環境に定義された値"hello"であり、変化しない。
+また、関数tellでは、引数に指定した値がログに記録される。
+
 #### ReaderとWriterで状態モナドとする
 
 さて、ここで「『読み出し』と『書き込み』ができるのなら状態モナドが作れるのでは」
@@ -514,6 +540,9 @@ runStateRW m s = case m of
 > sample `runStateRW` "hello"
 (("hello","I say hello.\n"),"You say Good-bye!\n")
 ```
+
+式askのかえす値は、状態の値である。
+関数tellは状態の値を変化させていく。
 
 #### おなじモナドの例が、2通りに
 
