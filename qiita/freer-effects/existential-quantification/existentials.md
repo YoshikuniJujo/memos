@@ -266,6 +266,54 @@ ShowYouに含まれる値は、「表示できる」という性質だけが保�
 
 ### 開かれた型
 
+存在型を使うことで、「開かれた型」を作ることができる。
+より正確には「開かれた直和をもつ型」となるだろうか。
+
+#### 閉じた型
+
+形を表すデータ型を考えてみよう。
+ファイルclosedShape.hsを、つぎのように作成する。
+
+```hs:closedShape.hs
+data Shape
+        = Rectangle (Double, Double) Double Double
+	| Circle (Double, Double) Double
+
+area :: Shape -> Double
+area (Rectangle _ w h) = w * h
+area (Circle _ r) = r * r * pi
+
+areas :: [Shape] -> [Double]
+areas = map area
+```
+
+試してみよう。
+
+```hs
+> area $ Rectangle (3, 8) 4 7
+28.0
+> area $ Circle (- 4, 5) 10
+314.1592653589793
+> areas [Rectangle (3, 8) 4 7, Circle (- 4, 5) 10]
+[28.0,314.1592653589793]
+```
+
+データ型Shapeには値構築子RectangleとCircleとがあり、
+それぞれ長方形と円とを意味する。
+関数areaは、それぞれの形の面積を形算する。
+
+### 開いた型
+
+うえの定義では、Shape型に含まれるのは長方形と円だけで、
+新しい形を追加することができない。
+ここで、ファイルopenShape.hsを、つぎのように定義しよう。
+
+```hs:openShape.hs
+(あとで書く)
+```
+
+(あとで書く)
+
 ### もとの型を取り出す
 
 ### もとの型を安全に取り出す
