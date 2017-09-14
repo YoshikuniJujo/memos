@@ -4,21 +4,21 @@
 
 data SomeShape = forall s . Shape s => SomeShape s
 
-class Shape s where
-	area :: s -> Double
+area :: SomeShape -> Double
+area (SomeShape s) = shapeArea s
 
-instance Shape SomeShape where
-	area (SomeShape s) = area s
+class Shape s where
+	shapeArea :: s -> Double
 
 data Rectangle = Rectangle (Double, Double) Double Double
 
 instance Shape Rectangle where
-	area (Rectangle _ w h) = w * h
+	shapeArea (Rectangle _ w h) = w * h
 
 data Circle = Circle (Double, Double) Double
 
 instance Shape Circle where
-	area (Circle _ r) = r * r * pi
+	shapeArea (Circle _ r) = r * r * pi
 
 areas :: [SomeShape] -> [Double]
 areas = map area

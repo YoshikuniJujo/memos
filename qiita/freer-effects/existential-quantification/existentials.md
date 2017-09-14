@@ -309,14 +309,123 @@ areas = map area
 ここで、ファイルopenShape.hsを、つぎのように定義しよう。
 
 ```hs:openShape.hs
+data SomeShape = forall s . Shape s => SomeShape s
+
+class Shape s where
+        shapeArea :: s -> Double
+
+area :: SomeShape -> Double
+area (SomeShape s) = shapeArea s
+
+data Rectangle = Rectangle (Double, Double) Double Double
+
+instance Shape Rectangle where
+        shapeArea (Rectangle _ w h) = w * h
+
+data Circle = Circle (Double, Double) Double
+
+instance Shape Circle where
+	shapeArea (Circle _ r) = r * r * pi
+
+areas :: [SomeShape] -> [Double]
+areas = map area
+```
+
+試してみよう。
+
+```hs
+> :load openShape.hs
+> areas [SomeShape $ Rectangle (3, 8) 4 7, SomeShape $ Circle (- 4, 5) 10]
+[28.0,314.1592653589793]
+```
+
+Shapeクラスのインスタンスにすることで、
+その型をSomeShape型としてあつかうことができるようになる。
+これは、つぎのような型が作れるのと、おなじことだ。
+
+```hs
+data Shape
+        = Rectangle ...
+	| Circle ...
+	| (ここに追加していくことができる)
+```
+
+### もとの型を取り出す
+
+さて、データ型Blackboxをみたときに、
+「なかの値を(まともな方法では)取り出すこともできない」と書いた。
+では、「まともでない方法」では、どうか。
+そう、「まともでない方法」では、取り出すことができる。
+
+#### カリー=ハワード同型対応
+
+ところで、「カリー=ハワード同型対応」を知っているだろうか。
+かんたんに言うと、「ある型に対する、まともな関数が定義できる」ということが、
+「ある命題を証明できる」ということに対応するということだ。
+
+たとえば(a -> a)型の関数としてidが定義できる。
+(a -> a)型に対応する命題は、「aならばaである」なので、たしかにこれは正しい。
+あるいは(a -> b, b -> c) -> (a -> c)型の関数として、uncurry $ flip (.)が定義できる。
+この型に対応する命題は「(aならばb、かつ、bならばc)ならば(aならばc)である」だ。
+これは三段論法であり、正しいことがわかる。
+
+#### 関数unsafeCoerce
+
+関数unsafeCoerceというものがある。
+この関数は数々のunsafe...のなかでも、断トツでunsafeだ。
+試してみよう。
+
+```hs
+> :module Unsafe.Coerce
+> unsafeCoerce True :: Int
+-576460205185149809
+> unsafeCoerce 123 :: (Int, Char)
+(zsh: segmentation fault stack ghci
+```
+
+なんということでしょう。
+Haskellをはじめて以来、ついぞ見ることのなかったsegmentation fault、
+なつかしのあの人に再会できました。
+型を見てみましょう。
+
+```hs
+> :module Unsafe.Coerce
+> :type unsafeCoerce
+unsafeCoerce :: a -> b
+```
+
+これをカリー=ハワード同型対応で考えると、
+「任意の前提aから、任意の帰結bが導ける」ことになってしまう。
+つまり、unsafeCoerceは「まとも」じゃない。
+
+#### Blackboxから値を取り出す
+
+さてunsafeCoerceを使うと、Blackhole型の値から、なかの値を取り出すことができる。
+
+```hs
+> :load blackbox.hs
+> :module + Unsafe.Coerce
+> reborn (Blackhole x) = unsafeCoerce x
+> reborn $ Blackhole True :: Bool
+True
+> reborn $ Blackhole 'c' :: Char
+'c'
+> reborn $ Blackhole False :: Integer
+139892841015216
+```
+
+もちろん、入れた値の型と異なる型を指定すれば、
+わけのわからない結果となる。
+
+### もとの型を安全に取り出す
+
+より安全に値を取り出すには、型の情報を保存しておく必要がある。
+
+```hs
 (あとで書く)
 ```
 
 (あとで書く)
-
-### もとの型を取り出す
-
-### もとの型を安全に取り出す
 
 ### 関数のリスト
 
