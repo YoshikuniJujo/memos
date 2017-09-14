@@ -183,15 +183,92 @@ useFoo' :: exists x . x -> Int -> Bool
 これまでの説明では、「存在型がいったい何に使えるのか」は、わからない。
 使用例をみていこう。
 
-### どの型の値でも要素にできるリスト
+### もっとも単純な存在型
 
-### 表示できるものだけを含むリスト
+まずは「もっとも単純な存在型」を定義してみよう。
+ファイルblackhole.hsを、つぎのように作成する。
+
+```hs:blackhole.hs
+{-# LANGUAGE ExistentialQuantification #-}
+
+data Blackhole = forall x . Blackhole x
+```
+
+どのような型であっても、値構築子Blackholeでつつむことができる。
+
+```hs
+> :load blackhole.hs
+> :type Blackhole 123
+Blackhole 123 :: Blackhole
+> :type Blackhole True
+Blackhole True :: Blackhole
+> :type Blackhole ('c', False)
+Blackhole ('c', False) :: Blackhole
+> :type Blackhole (Blackhole [False, True, True])
+Blackhole [False, True, True] :: Blackhole
+```
+
+パターンマッチで、なかの値を取り出す関数を書いてみよう。
+
+```hs
+> some (Blackhole x) = x
+
+<interactive>:x:y: error:
+    ・ Couldn't match expected ...
+         because type variable `x' would escape its scope
+    ...
+```
+
+エラーとなる。
+パターンマッチで値を取り出そうとしても、値xの型が決められないので、
+型エラーとなる。
+Blackhole型の値を使って何かすることもできないし、
+Blackhole型から、なかの値を(まともな方法では)取り出すこともできない。
+
+### 表示できるものだけに制限する
+
+すべての型について実行できる演算には、あまり意味のあるものはない。
+そこで、「すべての型」ではなく、すこし制限をつけてみよう。
+まずは、「表示できる」ものだけをつつむことのできる型を作ろう。
+showyou.hsを、つぎのように作成する。
+
+```hs:showyou.hs
+{-# LANGUAGE ExistentialQuantification #-}
+
+data ShowYou = forall s . Show s => ShowYou s
+```
+
+この型ShowYouをShowクラスのインスタンスにしておこう。
+
+```hs:showyou.hs
+instance Show ShowYou where
+        show (ShowYou s) = "(ShowYou " ++ show s ++ ")"
+```
+
+「Blackholeのときは取り出せなかったのに、ここでは取り出せるのは、なぜ?」
+と思うかもしれない。
+ここでの値sは、Showクラスのインスタンスであることが保証されている。
+Showクラスのインスタンスであれば、関数showでStringに評価されるはずだ。
+一度は「型のわからない値s」となったとしても、最終的にはString型になる。
+そのようにして、型を決めることができる。試してみよう。
+
+```hs
+> :load showyou.hs
+> ShowYou 123
+(ShowYou 123)
+> ShowYou (True, 'c')
+(ShowYou (True,'c'))
+> ShowYou (ShowYou [True, False, True])
+(ShowYou (ShowYou [True,False,True]))
+```
+
+ShowYouに含まれる値は、「表示できる」という性質だけが保証されている。
+
+### 開かれた型
 
 ### もとの型を取り出す
 
 ### もとの型を安全に取り出す
-
-### 開かれた型
 
 ### 関数のリスト
 
