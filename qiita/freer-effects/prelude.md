@@ -96,7 +96,7 @@ Freer Effectsでの改善点
 	* Freeモナドとは
 	* FreeモナドでReaderモナド、Writerモナドを構成する
 2. [存在型(ExistentialQuantification拡張)の解説](
-	existential-quantification/existentions.md)
+	existential-quantification/existentials.md)
 3. FreeモナドとCoyoneda
 	* Coyonedaを使ってみる
 	* FreeモナドとCoyonedaを組み合わせる
