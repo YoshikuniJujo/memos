@@ -136,7 +136,7 @@ unFoo :: exists x . Foo -> x
 意味としては、つぎのようになる。
 
 	すべての型xについてx型の値をFoo型の値に変換する関数Fooを定義
-	Foo型の値から、なんらかの型xの値へ変換する関数unFooを定義
+	Foo型の値を、なんらかの型xの値へ変換する関数unFooを定義
 
 このあたりは、つぎの「箱」のイメージで理解できる。
 
@@ -271,7 +271,7 @@ ShowYouに含まれる値は、「表示できる」という性質だけが保�
 
 #### 閉じた型
 
-形を表すデータ型を考えてみよう。
+図形を表すデータ型を考えてみよう。
 ファイルclosedShape.hsを、つぎのように作成する。
 
 ```hs:closedShape.hs
@@ -300,7 +300,7 @@ areas = map area
 
 データ型Shapeには値構築子RectangleとCircleとがあり、
 それぞれ長方形と円とを意味する。
-関数areaは、それぞれの形の面積を形算する。
+関数areaは、それぞれの図形の面積を計算する。
 
 ### 開いた型
 
@@ -350,7 +350,7 @@ data Shape
 	| (ここに追加していくことができる)
 ```
 
-### もとの型を取り出す
+### もとの値を取り出す
 
 さて、データ型Blackboxをみたときに、
 「なかの値を(まともな方法では)取り出すこともできない」と書いた。
@@ -481,7 +481,94 @@ Just '\-576460202777211265'
 
 ### 関数のリスト
 
+存在型の使用例をもうひとつ、みてみよう。
+たとえば、複数の関数を合成する代わりに、リストに保存しておきたいとする。
+つぎのような関数の合成を考える。
+
+```hs
+reverse . show . (* 3) . (+ 5)
+```
+
+このように関数を合成する代わりにリストに保存しておきたい。
+しかし、つぎのようには、できない
+
+```hs
+[reverse, show, (* 3), (+ 5)]
+```
+
+「それぞれの関数の型が、すべておなじ」ではないからだ。
+型が、(c -> d), (b -> c), (a -> b), ...のようになっている要素を、
+リストとして保存できるデータ型を作る。
+ファイルfunList.hsを作成する。
+
+```hs:funList.hs
+{-# LANGUAGE ExistentialQuantification #-}
+
+infixr 9 :.:
+data FunList a b = Fun (a -> b) | forall x . (x -> b) :.: FunList a x
+
+apply :: FunList a b -> a -> b
+apply (Fun f) = f
+apply (f :.: fs) = f . apply fs
+```
+
+試してみよう。
+
+```hs
+> (reverse :.: show :.: (* 3) :.: Fun (+ 5)) `apply` 2
+"12"
+```
+
 ### 途中経過を表示する
+
+うえの型FunList a bは、効率などを考えなければ、型(a -> b)とほとんど、おなじものだ。
+関数applyによって、値に適用してやるぐらいしか、できることはない。
+もうすこし意味のあることをさせてみよう。
+ファイルshowProgress.hsを、つぎのように作成する。
+
+```hs:showProgress.hs
+{-# LANGUAGE ExistentialQuantification #-}
+
+infixr 9 :.:
+data FunList a b
+        = Fun (a -> b)
+        | forall x . Show x => (x -> b) :.: FunList a x
+
+apply :: FunList a b -> a -> b
+apply (Fun f) = f
+apply (f :.: fs) = f . apply fs
+
+showProgress :: Show a => FunList a b -> a -> (b, [String])
+showProgress (Fun f) x = (f x, show x)
+showProgress (f :.: fs) x = (f y, show y : ps)
+	where (y, ps) = showProgress fs x
+```
+
+試してみよう。
+
+```hs
+> :load showProgress.hs
+> (reverse :.: show :.: (* 3) :.: Fun (+ 5)) `apply` 2
+"12"
+> (reverse :.: show :.: (* 3) :.: Fun (+ 5)) `showProgress` 2
+("12",["\"21\"","21","7","2"])
+```
+
+途中経過を文字列のリストとして、取り出すことができた。
+
+まとめ
+------
+
+標準的なHaskellでは、data Foo = Foo xのように、
+等号の左側にない型変数を右側で使うような定義はできない。
+ExistentialQuantification拡張を設定したうえで、
+明示的に量化子forallをつけることで、このような定義が可能となる。
+このように定義した型を、関数に使うことは存在量化された型を使うのと、
+おなじ意味になる。
+
+使用例としては、値構築子を追加できるデータ型と同等のものを作ることや、
+関数合成する代わりに関数を保管するリストを作ることを挙げた。
+これらは、いろいろな型を、ひとつの型にまとめるような、かたちになっている。
 
 参考
 ----
