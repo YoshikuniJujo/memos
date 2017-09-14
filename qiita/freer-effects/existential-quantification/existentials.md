@@ -420,12 +420,64 @@ True
 ### もとの型を安全に取り出す
 
 より安全に値を取り出すには、型の情報を保存しておく必要がある。
+つぎのようなファイルwithType.hsを作成する。
 
 ```hs
-(あとで書く)
+{-# LANGUAGE ExistentialQuantification #-}
+
+import Unsafe.Coerce
+
+data WithType = forall x . WithType String x
+
+fromInt :: Int -> WithType
+fromInt = WithType "Int"
+
+fromBool :: Bool -> WithType
+fromBool = WithType "Bool"
+
+fromChar :: Char -> WithType
+fromChar = WithType "Char"
+
+toInt :: WithType -> Maybe Int
+toInt (WithType "Int" x) = Just $ unsafeCoerce x
+toInt _ = Nothing
+
+toBool :: WithType -> Maybe Bool
+toBool (WithType "Bool" x) = Just $ unsafeCoerce x
+toBool _ = Nothing
+
+toChar :: WithType -> Maybe Char
+toChar (WithType "Char" x) = Just $ unsafeCoerce x
+toChar _ = Nothing
 ```
 
-(あとで書く)
+試してみる。
+
+```hs
+> :load withType.hs
+> i = fromInt 123
+> b = fromBool True
+> c = fromChar 'c'
+> toInt i
+Just 123
+> toBool b
+Just True
+> toInt c
+Nothing
+```
+
+安全に取り出せているのがわかる。
+さらに、つぎのように試してみよう。
+
+```hs
+> x = WithType "Char" True
+> toChar x
+Just '\-576460202777211265'
+```
+
+大変なことになっている。
+関数from...だけを使い、WithTypeを直接、使わないようにする必要がある。
+モジュールの機能を利用して、WithTypeを隠蔽する必要がある。
 
 ### 関数のリスト
 
