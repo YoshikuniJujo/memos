@@ -136,6 +136,57 @@ Foo Double :: *
 ### 型シノニム族を使う
 
 型シノニム族は、ある型と別の型とを関連づけたいときに使える。
+たとえば、リストをその要素の型によって、
+より空間効率のいい構造に変換することを考える。
+たとえばユニット型の値のリストは、その長さを表す整数に置き換えることができる。
+また、真偽値型の値のリストは、
+長さを表す整数と、それぞれのビットのオン/オフを表す整数に置き換えることができる。
+8ビット非負整数のリストはByteString型の値に置き換えられる。
+またDouble型の値のリストは、そのままのリストとすることにする。
+
+もとのリストの要素の型と、それの空間効率のいい表現との対応を示す。
+
+```hs
+() ==> Int
+Bool ==> (Int, Integer)
+Word8 ==> Data.ByteString.ByteString
+Double ==> [Double]
+```
+
+ファイルpackable.hsを作成し、型族を使って、この対応を表現してみよう。
+必要なモジュールの導入などの記述も、あらかじめしておこう。
+
+```hs:packable.hs
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TypeFamilies #-}
+
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+import Control.Arrow
+import Data.Bits
+import Data.Bool
+import Data.Word
+
+import qualified Data.ByteString as BS
+
+type family List x
+
+type instance List () = Int
+type instance List Bool = (Int, Integer)
+type instance List Word8 = BS.ByteString
+type instance List Double = [Double]
+```
+
+さて、もとのリストの要素の型と、対応する構造との組を定義することができた。
+つぎにしたいことは、当然、リストからの変換とリストへの変換になるだろう。
+それらの型は、つぎのようになるはずだ。
+
+```hs
+fromList :: [a] -> List a
+toList :: List a -> [a]
+```
+
+これらの関数は、型変数aの型によって
 
 ### 閉じた型シノニム族
 
