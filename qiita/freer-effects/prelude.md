@@ -97,25 +97,26 @@ Freer Effectsでの改善点
 	* FreeモナドでReaderモナド、Writerモナドを構成する
 2. [存在型(ExistentialQuantification拡張)の解説](
 	existential-quantification/existentials.md)
-3. FreeモナドとCoyoneda
+3. 一般化代数データ型(GADTs拡張)の解説
+4. FreeモナドとCoyoneda
 	* Coyonedaを使ってみる
 	* FreeモナドとCoyonedaを組み合わせる
 		+ いろいろなモナドを構成する
-4. Freerモナド(Operationalモナド)でいろいろなモナドを構成する
+5. Freerモナド(Operationalモナド)でいろいろなモナドを構成する
 	* FreeモナドとCoyonedaをまとめて、Freerモナドとする
 	* Readerモナド
 	* Writerモナド
 	* 状態モナド
 	* エラーモナド
-5. モナドを混ぜ合わせる(閉じた型で)
+6. モナドを混ぜ合わせる(閉じた型で)
 	* Freerモナドで、状態モナドとエラーモナドを混ぜ合わせる
-6. 存在型による拡張可能なデータ構造(Open Union)
-7. モナドを混ぜ合わせる(開いた型で)
+7. 存在型による拡張可能なデータ構造(Open Union)
+8. モナドを混ぜ合わせる(開いた型で)
 	* FreeモナドとOpen Unionを組み合わせる
 	* 状態モナドにエラーモナドを追加する
-8. Open Unionを型によって安全にする
-9. Freer Effectsで、IOモナドなどの、既存のモナドを使用する
-10. 関数を保管しておくデータ構造による効率化
-11. いろいろなEffect
+9. Open Unionを型によって安全にする
+10. Freer Effectsで、IOモナドなどの、既存のモナドを使用する
+11. 関数を保管しておくデータ構造による効率化
+12. いろいろなEffect
 	* 関数handleRelayなどを作成する
 	* NonDetについて、など
