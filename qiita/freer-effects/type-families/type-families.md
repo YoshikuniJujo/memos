@@ -135,6 +135,8 @@ Foo Double :: *
 
 ### 型シノニム族を使う
 
+型シノニム族は、ある型と別の型とを関連づけたいときに使える。
+
 ### 閉じた型シノニム族
 
 データ族
@@ -145,3 +147,8 @@ Foo Double :: *
 ### データ族を使う
 
 ### 閉じたデータ族?
+
+参考
+----
+
+[Wikibooks: GHC/Type families](https://wiki.haskell.org/GHC/Type_families)
