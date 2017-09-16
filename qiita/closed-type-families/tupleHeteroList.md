@@ -95,6 +95,12 @@ type family Equal x y where
 
 ### DataKinds
 
+この拡張を使うと、値として定義された表現を「型」として使うことができる。
+値を定義すると、型の世界にもおなじ形のものが生成される、といった感じだ。
+たとえば、この拡張を使うと、値の世界でではなく、
+型の世界でFalse, Trueといった
+(途中)
+
 ### MultiParamTypeClasses
 
 ### FlexibleInstances
