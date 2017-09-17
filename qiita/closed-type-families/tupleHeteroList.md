@@ -132,6 +132,15 @@ GHCにつぎのどちらかのオプションを設定する。
 
 ### MultiParamTypeClasses
 
+この拡張を使うと、型クラスの型引数が複数取れるようになる。
+
+```hs
+class Foo a b where
+	foo :: a -> b -> ...
+```
+
+(途中)
+
 ### FlexibleInstances
 
 ### TypeOperators
