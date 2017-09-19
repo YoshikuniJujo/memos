@@ -196,5 +196,164 @@ instance {-# OVERLAPPABLE #-} Bar t where
 タプルで作ったリストの要素を型で取り出す
 ----------------------------------------
 
-型の重複を許さないタプル
-------------------------
+まずは、言語拡張を定義しておく。
+
+```hs:tuple.hs
+{-# LANGUAGE TypeFamilies, DataKinds #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
+
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+```
+
+-Wallは、unticked-promoted-contructorsを含め、すべての警告を有効にする。
+-fno-warn-tabsはタブの使用に文句を言わせないために指定する。
+
+何らかの型vsの値から、何らかの型vの値を取り出せるという型クラスを定義する。
+
+```hs:tuple.hs
+class Get v vs where
+        get :: vs -> v
+```
+
+タプルとその要素とを、この型のインスタンスにする。
+まず、タプル(で作ったリスト)の先頭が、
+取り出そうとしている型の値だったときの定義をする。
+
+```hs:tuple.hs
+instance Get v (v, vs) where
+        get (x, _) = x
+```
+
+つぎに、取り出そうとしている型とタプル(で作ったリスト)の先頭の値の型とが、
+異なっているときの定義をする。
+
+```hs:tuple.hs
+instance {-# OVERLAPPABLE #-} Get v vs => Get v (_w, vs) where
+        get (_, xs) = get xs
+```
+
+このパターンにはvと\_wとは、異なる型であって、おなじ型であってもマッチする。
+しかし、OVERLAPPABLEプラグマによって、「より特殊なパターン」のほうが
+優先するというルールが指定されているため、さきに、うえのほうのパターンとの
+マッチが試される。
+
+これで、型によって値を取り出すことができる。
+
+```hs
+> :load tuple.hs
+> get ('c', (True, ("hello", ()))) :: Bool
+True
+```
+
+ここで、作成されるタプル(で作ったリスト)に、
+おなじ型の値が含まれないようにしたい。
+タプルを直接、定義するのではなく、
+新しくスマート値構築子を定義して、そちらを使うようにする。
+
+まずは、タプルに特定の型が含まれているかどうかを確認するための
+型を定義する。
+
+```hs
+type family Elem t ts where
+        Elem _ () = 'False
+	Elem t (t, _) = 'True
+	Elem t (_, ts) = Elem t ts
+```
+
+ここで、この記事の本題である「閉じた型シノニム族」の
+「型の定義をうえから順に試していける」という性質を利用している。
+
+これを利用して、スマート値構築子を定義する。
+
+```hs
+infixr 5 .:
+
+(.:) :: Elem t ts ~ 'False => t -> ts -> (t, ts)
+(.:) = (,)
+```
+
+この値構築子を試してみよう。
+
+```hs
+> :reload
+> 'c' .: True .: "hello" .: ()
+('c',(True,("hello",())))
+> False .: it
+<interactive>:X:Y: error:
+    ・Couldn't match type `'True' with `'False'
+        arising from a use of `.:'
+    ・In the expression: False .: it
+      In an equation for `it': it = False .: it
+```
+
+このスマート値構築子(.:)だけを使えば、
+タプル(で作ったリスト)に
+「取り出せない値」ができてしまうことを、避けることができる。
+
+型の重複を許さないために新しい型を定義する
+------------------------------------------
+
+さて、本題はここまでだが、やはり「(,)を使わないでね」という
+紳士協定にたよった「安全性の保証」というものは、すこし気持ちが悪い。
+新しい型とモジュールシステムで、「重復する型の値を含まない」という
+制約を強制してみよう。
+本質的には、うえの定義とおなじである。
+つぎのようなモジュールを作る。
+
+```hs:HeteroList.hs
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeFamilies, DataKinds #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
+
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+module HeteroList (empty, (.:), get) where
+
+data a :.: b = a :.: b deriving Show
+
+class Get v vs where
+        get :: vs -> v
+
+instance Get v (v :.: vs) where
+        get (x :.: _) = x
+instance {-# OVERLAPPABLE #-} Get v vs => Get v (_w :.: vs) where
+        get (_ :.: xs) = get xs
+
+type family Elem t ts where
+        Elem _ () = 'False
+        Elem t (t :.: _) = 'True
+        Elem t (_ :.: ts) = Elem t ts
+
+infixr 5 .:
+
+empty :: ()
+empty = ()
+
+(.:) = Elem t ts ~ 'False => t -> ts -> (t :.: ts)
+(.:) = (:.:)
+```
+
+試してみる。
+
+```hs
+> :load HeteroList.hs
+> sample = 'c' .: True .: "hello" .: ()
+> get sample :: Bool
+True
+> False .: sample
+
+<interactive>:X:Y: error:
+    ・Couldn't match type `'True' with `'False'
+        arising from a use of `.:'
+    ・In the expression: False .: sample
+      In an equation for `it': it = False .: sample
+```
+
+ここで作られた構造には、おなじ型の値が含まれていないことが、保証される。
+
+まとめ
+------
+
+「閉じた型シノニム族」には、型の定義を「うえから順に試す」という性質がある。
+この性質を利用して型Elemを作成した。
+この型Elemの使用例として、「型によって値を取り出せるヘテロリスト」の例を挙げた。
