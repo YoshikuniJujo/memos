@@ -186,7 +186,61 @@ fromList :: [a] -> List a
 toList :: List a -> [a]
 ```
 
-これらの関数は、型変数aの型によって
+これらの関数は、型変数aの型によって、定義のしかたが変わる。
+よって、型クラスのクラス関数にする必要がある。
+ファイルpackable.hsに、つぎのように追加しよう。
+
+```hs:packable.hs
+class Packable p where
+        fromList :: [p] -> List p
+        toList :: List p -> [p]
+```
+
+それぞれの型に対する関数fromList, toListを定義する。
+
+```hs:packable.hs
+instance Packable () where
+        fromList = length
+        toList = (`replicate` ())
+
+instance Packable Bool where
+        fromList = \case
+                [] -> (0, 0)
+                b : bs -> (+ 1) *** (bool 0 1 b .|.) . (`shiftL` 1)
+                        $ fromList bs
+        toList (l, n) | l <= 0 || n < 0 = []
+        toList (l, n) = n `testBit` 0 : toList (l - 1, n `shiftR` 1)
+
+instance Packable Word8 where
+        fromList = BS.pack
+        toList = BS.unpack
+
+instance Packable Double where
+        fromList = id
+        toList = id
+```
+
+試してみよう。
+
+```hs
+> :load packable.hs
+> fromList [(), (), (), (), ()]
+5
+> toList it :: [()]
+[(),(),(),(),()]
+> fromList [True, False, False, True, False]
+(5,9)
+> toList it :: [Bool]
+[True,False,False,True,False]
+> fromList [100 :: Word8, 123, 115, 120, 125]
+"d{sx}"
+> toList it :: [Word8]
+[100,123,115,120,125]
+> fromList [3.5 :: Double, 8.2, 1.3]
+[3.5,8.2,1.3]
+> toList it :: [Double]
+[3.5,8.2,1.3]
+```
 
 ### 型クラスと関連づけられた型シノニム族
 
