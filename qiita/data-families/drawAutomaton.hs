@@ -17,7 +17,7 @@ height = snd size
 
 cWidth, cHeight :: Double
 cWidth = width * 9 / 16
-cHeight = height * 3 / 4
+cHeight = height * 11 / 16
 
 main :: IO ()
 main = do
@@ -101,6 +101,28 @@ main = do
 	setheading t 0
 	pensize t 1
 
+	goto t cWidth cHeight
+	setheading t 0
+	backward t 50
+	setheading t 90
+	forward t 20
+	setheading t 30
+	arrow2 t
+
+	setheading t 0
+	forward t 5
+	setheading t 90
+	backward t 40
+	setheading t (- 150)
+	arrow2 t
+
+	goto t cWidth cHeight
+	setheading t 90
+	backward t 50
+	write t "KochiGothic" 18 "0"
+	forward t 100
+	write t "KochiGothic" 18 "0"
+
 	grd <- getSVG g
 	svg <- getSVG t
 	writeFile "./svgs/automaton.svg" . showSVG width height . map ("" ,)
@@ -127,5 +149,18 @@ arrow1 t = do
 	setheading t 90
 	forward t 50
 	setheading t 0
-	backward t 20
+	backward t 24
 	write t "KochiGothic" 18 "1"
+
+arrow2 :: Turtle -> IO ()
+arrow2 t = do
+	pensize t 3
+	drawIt t $ \s -> do
+		replicateM_ 7 $ forward s 15 >> right t 10
+		forward s 5
+	left t 30
+	drawIt t (`backward` 15)
+	forward t 15
+	right t 60
+	drawIt t (`backward` 15)
+	pensize t 1
