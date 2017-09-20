@@ -9,11 +9,15 @@ import Graphics.X11.Turtle
 import System.Environment
 
 size :: (Double, Double)
-size = (450, 300)
+size = (360, 170)
 
 width, height :: Double
 width = fst size
 height = snd size
+
+cWidth, cHeight :: Double
+cWidth = width * 9 / 16
+cHeight = height * 3 / 4
 
 main :: IO ()
 main = do
@@ -39,7 +43,7 @@ main = do
 
 	topleft f
 
-	goto t (width / 2) (height / 2)
+	goto t cWidth cHeight
 	setheading t 0
 	backward t 190
 	pensize t 3
@@ -52,7 +56,7 @@ main = do
 	setheading t 0
 	pensize t 1
 
-	goto t (width / 2) (height / 2)
+	goto t cWidth cHeight
 	backward t 100
 	setheading t 90
 	backward t 30
@@ -68,7 +72,7 @@ main = do
 	backward t 10
 	write t "KochiGothic" 24 "S1"
 
-	goto t (width / 2) (height / 2)
+	goto t cWidth cHeight
 	backward t 80
 	setheading t 90
 	forward t 45
@@ -76,7 +80,7 @@ main = do
 	setheading t 0
 	pensize t 1
 
-	goto t (width / 2) (height / 2)
+	goto t cWidth cHeight
 	setheading t 0
 	forward t 100
 	setheading t 90
@@ -89,7 +93,7 @@ main = do
 	backward t 10
 	write t "KochiGothic" 24 "S2"
 
-	goto t (width / 2) (height / 2)
+	goto t cWidth cHeight
 	forward t 120
 	setheading t 90
 	forward t 45
