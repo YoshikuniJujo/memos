@@ -15,9 +15,7 @@ check = maybe False accept . run initialState
 run :: DFA alphabet =>
 	States alphabet -> [alphabet] -> Maybe (States alphabet)
 run s [] = Just s
-run s (a : as) = do
-	s' <- transition s a
-	run s' as
+run s (a : as) = (`run` as) =<< transition s a
 
 data ExampleAlphabet = Zero | One deriving Show
 
