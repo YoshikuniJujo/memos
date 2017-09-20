@@ -2,6 +2,7 @@
 
 {-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
 
+import Control.Monad
 import Data.Bool
 import Text.XML.YJSVG (showSVG)
 import Graphics.X11.Turtle
@@ -39,6 +40,19 @@ main = do
 	topleft f
 
 	goto t (width / 2) (height / 2)
+	setheading t 0
+	backward t 190
+	pensize t 3
+	drawIt t (`forward` 45)
+	left t 30
+	drawIt t (`backward` 15)
+	forward t 15
+	right t 60
+	drawIt t (`backward` 15)
+	setheading t 0
+	pensize t 1
+
+	goto t (width / 2) (height / 2)
 	backward t 100
 	setheading t 90
 	backward t 30
@@ -55,6 +69,14 @@ main = do
 	write t "KochiGothic" 24 "S1"
 
 	goto t (width / 2) (height / 2)
+	backward t 80
+	setheading t 90
+	forward t 45
+	arrow1 t
+	setheading t 0
+	pensize t 1
+
+	goto t (width / 2) (height / 2)
 	setheading t 0
 	forward t 100
 	setheading t 90
@@ -68,15 +90,12 @@ main = do
 	write t "KochiGothic" 24 "S2"
 
 	goto t (width / 2) (height / 2)
+	forward t 120
+	setheading t 90
+	forward t 45
+	arrow1 t
 	setheading t 0
-	backward t 190
-	pensize t 3
-	drawIt t (`forward` 45)
-	left t 30
-	drawIt t (`backward` 15)
-	forward t 15
-	right t 60
-	drawIt t (`backward` 15)
+	pensize t 1
 
 	grd <- getSVG g
 	svg <- getSVG t
@@ -86,3 +105,23 @@ main = do
 
 drawIt :: Turtle -> (Turtle -> IO ()) -> IO ()
 drawIt t act = pendown t >> act t >> penup t
+
+arrow1 :: Turtle -> IO ()
+arrow1 t = do
+	p <- position t
+	pensize t 3
+	setheading t 60
+	drawIt t $ \s -> do
+		replicateM_ 25 $ forward s 4 >> left t 10
+		forward s 4
+	left t 15
+	drawIt t (`backward` 15)
+	forward t 15
+	right t 60
+	drawIt t (`backward` 15)
+	uncurry (goto t) p
+	setheading t 90
+	forward t 50
+	setheading t 0
+	backward t 20
+	write t "KochiGothic" 18 "1"
