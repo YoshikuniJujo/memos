@@ -3,4 +3,4 @@
 *.hi
 *.o
 bin/
-svgs/
+.svgs/
