@@ -68,6 +68,33 @@ data instance Example Int = Some Int
 data instance Example Bool = Other Bool
 ```
 
+「閉じている」からできること
+----------------------------
+
+「閉じている」ので、値構築子の列挙が可能になる。
+これにより、GADTを利用して定義した値を処理する関数を、
+型クラスのインスタンス関数ではない、ふつうの関数として定義できる。
+うえの例では、つぎのような関数が定義できる。
+
+```hs
+fun :: Example a -> a
+fun (Some n) = n
+fun (Other b) = b
+```
+
+これは、つぎのような定義と、だいたい、おなじと考えられる。
+
+```hs
+class Fun a where
+        fun :: Example a -> a
+
+instance Fun Int where
+        fun (Some n) = n
+
+instance Fun Bool where
+        fun (Other b) = b
+```
+
 参考
 ----
 
