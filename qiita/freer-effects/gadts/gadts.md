@@ -95,6 +95,13 @@ instance Fun Bool where
         fun (Other b) = b
 ```
 
+XXXの例
+-------
+
+### データ族で
+
+### 一般化代数データ型(GADTs)で
+
 参考
 ----
 

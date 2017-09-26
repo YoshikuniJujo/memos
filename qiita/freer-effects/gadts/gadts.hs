@@ -19,3 +19,9 @@ eval (B b) = b
 eval (e1 :+: e2) = eval e1 + eval e2
 eval (e1 :*: e2) = eval e1 * eval e2
 eval (e1 :=: e2) = eval e1 == eval e2
+
+{-
+make :: a -> Expr a
+make n = I n
+make b = B b
+-}
