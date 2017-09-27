@@ -17,3 +17,11 @@ data Reader r a where
 
 data family Reader r a
 data instance Reader r r = Reader
+
+{-
+data family Reader r a where
+	Reader r r = Reader
+-}
+
+type family Rdr r a where
+	Rdr r r = ()
