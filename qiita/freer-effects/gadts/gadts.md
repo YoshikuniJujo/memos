@@ -158,7 +158,40 @@ instance SurfaceAreable Tetrahedron where
 
 #### 正六面体
 
+正六面体では、つぎのようになる。
+
+```hs:regularPolyhedronFamily.hs
+data Hexahedron = Hexahedron Integer deriving Show
+
+instance SurfaceAreable Hexahedron where
+        data FaceArea Hexahedron = FaceAreaHexa Integer deriving Show
+        calcFaceArea (Hexahedron a) = FaceAreaHexa $ a * a
+        getSurfaceArea (FaceAreaHexa fa) = 6 * fromInteger fa
+```
+
+正六面体の、ひとつの面は正方形なので、一辺の長さを2乗すれば、
+その面積になる。
+ひとつの面の面積をInteger型の値として保存することで、
+Double型の値として保存するよりも「正確な値」とすることができる。
+表面積をもとめる段階で、
+ほかの形の場合とおなじになるようにDouble型の値としている。
+
 #### 正八面体
+
+正八面体では、つぎのようになる。
+
+```hs:regularPolyhedronFamily.hs
+data Octahedron = Octahedron Integer deriving Show
+
+instance SurfaceAreable Octagedron where
+        data FaceArea Octahedron = FaceAreaOcta Double deriving Show
+        calcFaceArea (Octahedron a) =
+                FaceAreaOcta $ fromIntegral (a * a) * sin (pi / 3) / 2
+        getSurfaceArea (FaceAreaOcta fa) = 8 * fa
+```
+
+正四面体での定義と、ほとんどおなじだ。
+面の数が4か8かという、ちがいがある。
 
 #### 正十二面体
 
