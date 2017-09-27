@@ -283,7 +283,7 @@ FaceAreaDodeca 172.0477400588967
 
 さて、データ型FaceArea rhについて考えてみよう。
 型変数rhには、モジュール内で定義された正多面体をあらわす型がはいる。
-正n面体について、n = 4, 6, 8, 12, 20のみである。
+正n面体について、ゆるされるのはn = 4, 6, 8, 12, 20のみである。
 つまり、正多面体は、この5種類しかない。
 よって、rhにうえで考えた値以外は入らないものとしていい。
 つまり、「開いたデータ族」ではなく「閉じたデータ族」として、
@@ -378,6 +378,35 @@ getSurfaceArea (FaceAreaIcosa fa) = 20 * fa
 > getSurfaceArea . calcFaceArea $ Dodecahedron 10
 2064.5728807067603
 ```
+
+#### 表面積を整数で
+
+六面体のひとつの面の面積は、整数値として保存されている。
+このことの「良さ」を実感するために、
+表面積を整数として取り出す関数を書いてみよう。
+
+```hs:regularPolyhedronGadts.hs
+getSurfaceAreaI :: FaceArea rh -> Integer
+getSurfaceAreaI (FaceAreaTetra fa) = round $ 4 * fa
+getSurfaceAreaI (FaceAreaHexa fa) = 6 * fa
+getSurfaceAreaI (FaceAreaOcta fa) = round $ 8 * fa
+getSurfaceAreaI (FaceAreaDodeca fa) = round $ 12 * fa
+getSurfaceAreaI (FaceAreaIcosa fa) = round $ 20 * fa
+```
+
+対話環境で試してみる。
+
+```hs
+> :reload
+> getSurfaceAreaI . calcFaceArea $ Hexahedron 3
+54
+> getSurfaceAreaI . calcFaceArea $ Dodecahedron 10
+2065
+```
+
+Double型の値として表面積を計算する場合にも、
+Integer型の値として表面積を計算する場合にも、
+ムダな型変換をおこなわずにすむように作ることができた。
 
 まとめ
 ------

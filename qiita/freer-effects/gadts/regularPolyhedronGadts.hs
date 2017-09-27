@@ -43,3 +43,10 @@ getSurfaceArea (FaceAreaHexa fa) = 6 * fromInteger fa
 getSurfaceArea (FaceAreaOcta fa) = 8 * fa
 getSurfaceArea (FaceAreaDodeca fa) = 12 * fa
 getSurfaceArea (FaceAreaIcosa fa) = 20 * fa
+
+getSurfaceAreaI :: FaceArea rh -> Integer
+getSurfaceAreaI (FaceAreaTetra fa) = round $ 4 * fa
+getSurfaceAreaI (FaceAreaHexa fa) = 6 * fa
+getSurfaceAreaI (FaceAreaOcta fa) = round $ 8 * fa
+getSurfaceAreaI (FaceAreaDodeca fa) = round $ 12 * fa
+getSurfaceAreaI (FaceAreaIcosa fa) = round $ 20 * fa
