@@ -13,7 +13,7 @@ Freer Effectsが、だいたいわかった: 4. データ族(TypeFamilies拡張)
 	../existential-quantification/existentials.md )
 3. [型シノニム族(TypeFamilies拡張)の解説](./type-synonym-family.md)
 4. データ族(TypeFamilies拡張)の解説
-5. 一般化代数データ型(GADTs拡張)の解説
+5. [一般化代数データ型(GADTs拡張)の解説](../gadts/gadts.md)
 6. FreeモナドとCoyoneda
 	* Coyonedaを使ってみる
 	* FreeモナドとCoyonedaを組み合わせる

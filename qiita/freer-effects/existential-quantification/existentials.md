@@ -10,7 +10,11 @@ Freer Effectsが、だいたいわかった: 2. 存在型(ExistentialQuantificat
 	* Freeモナドとは
 	* FreeモナドでReaderモナド、Writerモナドを構成する
 2. 存在型(ExistentialQuantification拡張)の解説
-3. 一般化代数データ型(GADTs拡張)の解説
+3. [型シノニム族(TypeFamilies拡張)の解説](
+	../type-families/type-synonym-family.md )
+4. [データ族(TypeFamilies拡張)の解説](
+	../type-families/data-family.md )
+3. [一般化代数データ型(GADTs拡張)の解説](../gadts/gadts.md)
 4. FreeモナドとCoyoneda
 	* Coyonedaを使ってみる
 	* FreeモナドとCoyonedaを組み合わせる
