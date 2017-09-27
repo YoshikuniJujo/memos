@@ -144,7 +144,7 @@ data Tetrahedron = Tetrahedron Integer deriving Show
 instance SurfaceAreable Tetrahedron where
         data FaceArea Tetrahedron = FaceAreaTetra Double deriving Show
         calcFaceArea (Tetrahedron a) =
-                FaceAreaTetra $ fromIntegral (a * a) * sin (pi / 3) / 2
+                FaceAreaTetra $ fromInteger (a * a) * sin (pi / 3) / 2
 	getSurfaceArea (FaceAreaTetra fa) = 4 * fa
 ```
 
@@ -186,7 +186,7 @@ data Octahedron = Octahedron Integer deriving Show
 instance SurfaceAreable Octagedron where
         data FaceArea Octahedron = FaceAreaOcta Double deriving Show
         calcFaceArea (Octahedron a) =
-                FaceAreaOcta $ fromIntegral (a * a) * sin (pi / 3) / 2
+                FaceAreaOcta $ fromInteger (a * a) * sin (pi / 3) / 2
         getSurfaceArea (FaceAreaOcta fa) = 8 * fa
 ```
 
@@ -203,7 +203,7 @@ data Dodecahedron = Dodecahedron Integer deriving Show
 instance SurfaceAreable Dodecahedron where
         data FaceArea Dodecahedron = FaceAreaDodeca Double deriving Show
         calcFaceArea (Dodecahedron a) =
-                FaceAreaDodeca $ fromIntegral (a * a) * 5 / (4 * tan (pi / 5))
+                FaceAreaDodeca $ fromInteger (a * a) * 5 / (4 * tan (pi / 5))
         getSurfaceArea (FaceAreaDodeca fa) = 12 * fa
 ```
 
@@ -221,7 +221,7 @@ data Icosahedron = Icosahedron Integer deriving Show
 instance SurfaceAreable Icosahedron where
         data FaceArea Icosahedron = FaceAreaIcosa Double deriving Show
         calcFaceArea (Icosahedron a) =
-                FaceAreaIcosa $ fromIntegral (a * a) * sin (pi / 3) / 2
+                FaceAreaIcosa $ fromInteger (a * a) * sin (pi / 3) / 2
         getSurfaceArea (FaceAreaIcosa fa) = 20 * fa
 ```
 
@@ -287,7 +287,51 @@ data FaceArea rh where
 
 #### ひとつの面の面積を計算するクラス関数
 
+ひとつの面の面積を計算するクラス関数を定義する。
+
+```hs:regularPolyhedronGadts.hs
+class FaceAreable rh where
+        calcFaceArea :: rh -> FaceArea rh
+
+instance FaceAreable Tetrahedron where
+        calcFaceArea (Tetrahedron a) =
+                FaceAreaTetra $ fromInteger (a * a) * sin (pi / 3) / 2
+
+instance FaceAreable Hexahedron where
+        calcFaceArea (Hexahedron a) = FaceAreaHexa $ a * a
+
+instance FaceAreable Octahedron where
+        calcFaceArea (Octahedron a) =
+                FaceAreaOcta $ fromInteger (a * a) * sin (pi / 3) / 2
+
+instance FaceAreable Dodecahedron where
+        calcFaceArea (Dodecahedron a) =
+                FaceAreaDodeca $ fromInteger (a * a) * 5 / (4 * tan (pi / 5))
+
+instance FaceAreable Icosahedron where
+        calcFaceArea (Icosahedron a) =
+                FaceAreaIcosa $ fromInteger (a * a) * sin (pi / 3) / 2
+```
+
 #### 表面積を取り出す関数
+
+表面積を取り出す関数を定義する。
+これは、GADTがデータ族とおおきく異なるところだ。
+「型のちがい」を越えて、それぞれ異なるデータ型の値構築子を、
+ひとつのデータ型のなかの、異なる値構築子として、
+まとめて定義することができる。
+
+```hs:regularPolyhedronGadts.hs
+getSurfaceArea :: FaceArea rh -> Double
+getSurfaceArea (FaceAreaTetra fa) = 4 * fa
+getSurfaceArea (FaceAreaHexa fa) = 6 * fromInteger fa
+getSurfaceArea (FaceAreaOcta fa) = 8 * fa
+getSurfaceArea (FaceAreaDodeca fa) = 12 * fa
+getSurfaceArea (FaceAreaIcosa fa) = 20 * fa
+```
+
+まとめ
+------
 
 参考
 ----

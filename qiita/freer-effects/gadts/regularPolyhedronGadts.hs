@@ -29,6 +29,10 @@ instance FaceAreable Octahedron where
 	calcFaceArea (Octahedron a) =
 		FaceAreaOcta $ fromInteger (a * a) * sin (pi / 3) / 2
 
+instance FaceAreable Dodecahedron where
+	calcFaceArea (Dodecahedron a) =
+		FaceAreaDodeca $ fromInteger (a * a) * 5 / (4 * tan (pi / 5))
+
 instance FaceAreable Icosahedron where
 	calcFaceArea (Icosahedron a) =
 		FaceAreaIcosa $ fromInteger (a * a) * sin (pi / 3) / 2
