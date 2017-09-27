@@ -95,10 +95,74 @@ instance Fun Bool where
         fun (Other b) = b
 ```
 
-XXXの例
--------
+正多面体の表面積の例
+--------------------
+
+### 何を作るか
+
+正多面体の表面積を計算するコードを書く。
+正多面体の、ひとつの面の面積を、まずはもとめて、
+それに面の数をかけることで表面積をもとめる。
+正多面体は辺の長さで表現する。
+辺の長さは整数のみとする。
+正六面体では、結果がかならず整数となり、
+正確な値を計算することができる。
+そこで、正六面体については、ひとつの面の面積を整数で表現するようにする。
 
 ### データ族で
+
+まずは、データ族を使って、書いてみよう。
+「表面積をもとめられる」という性質をあらわす型クラスを作成する。
+
+```hs:regularPolyhedronFamily.hs
+{-# LANGUAGE TypeFamilies #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+module RegularPolyhedron where
+
+class SurfaceAreable sa where
+        data FaceArea sa
+        calcFaceArea :: sa -> FaceArea sa
+        getSurfaceArea :: FaceArea sa -> Double
+```
+
+FaceArea saという新しいデータ族を宣言している。
+これは、ひとつの面の面積をあらわす型だ。
+クラス関数calcFaceAreaは正多面体をあらわす値から、
+ひとつの面の面積をあらわす値を計算する。
+クラス関数getSurfaceAreaは、ひとつの面の面積から、
+表面積をDouble型の値として取り出す。
+
+#### 正四面体
+
+正四面体をあらわす型を定義して、
+それを型クラスSurfaceAreableのインスタンスにする。
+
+```hs:regularPolyhedronFamily.hs
+data Tetrahedron = Tetrahedron Integer deriving Show
+
+instance SurfaceAreable Tetrahedron where
+        data FaceArea Tetrahedron = FaceAreaTetra Double deriving Show
+        calcFaceArea (Tetrahedron a) =
+                FaceAreaTetra $ fromIntegral (a * a) * sin (pi / 3) / 2
+	getSurfaceArea (FaceAreaTetra fa) = 4 * fa
+```
+
+三角形ABCの面積は、つぎの式でもとめられる。
+
+	(ABの長さ * BCの長さ * sin 角ABC) / 2
+
+よって、正三角形では、1辺の長さをaとして、つぎのようになる。
+
+	(a * a * sin 60度) / 2
+
+#### 正六面体
+
+#### 正八面体
+
+#### 正十二面体
+
+#### 正二十面体
 
 ### 一般化代数データ型(GADTs)で
 
