@@ -120,13 +120,13 @@ instance Fun Bool where
 
 module RegularPolyhedron where
 
-class SurfaceAreable sa where
-        data FaceArea sa
-        calcFaceArea :: sa -> FaceArea sa
-        getSurfaceArea :: FaceArea sa -> Double
+class SurfaceAreable rh where
+        data FaceArea rh
+        calcFaceArea :: rh -> FaceArea rh
+        getSurfaceArea :: FaceArea rh -> Double
 ```
 
-FaceArea saという新しいデータ族を宣言している。
+FaceArea rhという新しいデータ族を宣言している。
 これは、ひとつの面の面積をあらわす型だ。
 クラス関数calcFaceAreaは正多面体をあらわす値から、
 ひとつの面の面積をあらわす値を計算する。
@@ -195,9 +195,99 @@ instance SurfaceAreable Octagedron where
 
 #### 正十二面体
 
+正十二面体では、つぎのようになる。
+
+```hs:regularPolyhedronFamily.hs
+data Dodecahedron = Dodecahedron Integer deriving Show
+
+instance SurfaceAreable Dodecahedron where
+        data FaceArea Dodecahedron = FaceAreaDodeca Double deriving Show
+        calcFaceArea (Dodecahedron a) =
+                FaceAreaDodeca $ fromIntegral (a * a) * 5 / (4 * tan (pi / 5))
+        getSurfaceArea (FaceAreaDodeca fa) = 12 * fa
+```
+
+五角形の面積は、一辺の長さをaとすると、つぎのようになる。
+
+	5 * (a * a) / (4 * tan 36度)
+
 #### 正二十面体
 
+正二十面体では、つぎのようになる。
+
+```hs:regularPolyhedronFamily.hs
+data Icosahedron = Icosahedron Integer deriving Show
+
+instance SurfaceAreable Icosahedron where
+        data FaceArea Icosahedron = FaceAreaIcosa Double deriving Show
+        calcFaceArea (Icosahedron a) =
+                FaceAreaIcosa $ fromIntegral (a * a) * sin (pi / 3) / 2
+        getSurfaceArea (FaceAreaIcosa fa) = 20 * fa
+```
+
+これも正四面体と、ほぼおなじ。
+
+#### 試してみよう
+
+対話環境で試してみよう。
+
+```hs
+> :load regularPolyhedronFamily.hs
+> calcFaceArea $ Hexahedron 3
+FaceAreaHexa 9
+> getSurfaceArea it
+54.0
+> calcFaceArea $ Dodecahedron 10
+FaceAreaDodeca 172.0477400588967
+> getSurfaceArea it
+2064.5728807067603
+```
+
 ### 一般化代数データ型(GADTs)で
+
+さて、データ型FaceArea rhについて考えてみよう。
+型変数rhには、モジュール内で定義された正多面体をあらわす型がはいる。
+正n面体を考えると、n = 4, 6, 8, 12, 20のみとなる。
+よって、rhにうえで考えた値以外は入らないものとしていい。
+つまり、「開いたデータ族」ではなく「閉じたデータ族」として、
+表現することが可能だ。
+「閉じたデータ族」と同等の表現である一般化代数データ型(GADTs)で、
+多面体の表面積をもとめる例を書き直してみよう。
+
+#### それぞれの正多面体をあらわすデータ型
+
+それぞれの正多面体をあらわすデータ型を定義する。
+
+```hs:regularPolyhedronGadts.hs
+{-# LANGUAGE GADTs #-}
+
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+module RegularPolyhedron where
+
+data Tetrahedron = Tetrahedron Integer deriving Show
+data Hexahedron = Hexahedron Integer deriving Show
+data Octahedron = Octahedron Integer deriving Show
+data Dodecahedron = Dodecahedron Integer deriving Show
+data Icosahedron = Icosahedron Integer deriving Show
+```
+
+#### ひとつの面の面積をあらわすデータ型
+
+ひとつの面の面積をあらわすデータ型をGADTを使って定義する。
+
+```hs:regularPolyhedronGadts.hs
+data FaceArea rh where
+        FaceAreaTetra :: Double -> FaceArea Tetrahedron
+        FaceAreaHexa :: Integer -> FaceArea Hexahedron
+        FaceAreaOcta :: Double -> FaceArea Octahedron
+        FaceAreaDodeca :: Double -> FaceArea Dodecahedron
+        FaceAreaIcosa :: Double -> FaceArea Icosahedron
+```
+
+#### ひとつの面の面積を計算するクラス関数
+
+#### 表面積を取り出す関数
 
 参考
 ----
