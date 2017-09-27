@@ -1,6 +1,42 @@
 Freer Effectsが、だいたいわかった: 5. 一般化代数データ型(GADTs拡張)の解説
 =========================================================================
 
+目次
+----
+
+0. [導入](../prelude.md)
+
+1. [Freeモナドの概要](../free-monad/free-monad.md)
+	* Freeモナドとは
+	* FreeモナドでReaderモナド、Writerモナドを構成する
+2. [存在型(ExistentialQuantification拡張)の解説](
+	../existential-quantification/existentials.md )
+3. [型シノニム族(TypeFamilies拡張)の解説](./type-synonym-family.md)
+4. [データ族(TypeFamilies拡張)の解説](../type-families/data-family.md)
+5. 一般化代数データ型(GADTs拡張)の解説
+6. FreeモナドとCoyoneda
+	* Coyonedaを使ってみる
+	* FreeモナドとCoyonedaを組み合わせる
+		+ いろいろなモナドを構成する
+7. Freerモナド(Operationalモナド)でいろいろなモナドを構成する
+	* FreeモナドとCoyonedaをまとめて、Freerモナドとする
+	* Readerモナド
+	* Writerモナド
+	* 状態モナド
+	* エラーモナド
+8. モナドを混ぜ合わせる(閉じた型で)
+	* Freerモナドで、状態モナドとエラーモナドを混ぜ合わせる
+9. 存在型による拡張可能なデータ構造(Open Union)
+10. モナドを混ぜ合わせる(開いた型で)
+	* FreeモナドとOpen Unionを組み合わせる
+	* 状態モナドにエラーモナドを追加する
+11. Open Unionを型によって安全にする
+12. Freer Effectsで、IOモナドなどの、既存のモナドを使用する
+13. 関数を保管しておくデータ構造による効率化
+14. いろいろなEffect
+	* 関数handleRelayなどを作成する
+	* NonDetについて、など
+
 はじめに
 --------
 
@@ -330,8 +366,32 @@ getSurfaceArea (FaceAreaDodeca fa) = 12 * fa
 getSurfaceArea (FaceAreaIcosa fa) = 20 * fa
 ```
 
+#### 試してみる
+
+対話環境で試してみる。
+
+```hs
+> :load regularPolyhedronGadts.hs
+> getSurfaceArea . calcFaceArea $ Hexahedron 3
+54.0
+> getSurfaceArea . calcFaceArea $ Dodecahedron 10
+2064.5728807067603
+```
+
 まとめ
 ------
+
+一般化代数データ型(GADT)は、幽霊型の延長として説明されることがあるが、
+ここでは、閉じたデータ族(に存在型を加味したもの)という方向から説明した。
+いっしょくたにされてしまうデータ型の結果を、
+型によってわけるという方向では説明しなかった。
+そうではなく、
+別々の型であっても閉じたデータ族であれば、値構築子が追加されることはないので、
+その値をあつかう(引数とする)関数は、クラス関数にしなくても、
+ふつうの関数として定義できますよという説明とした。
+
+「型族(と存在型)については理解したけれど、GADTとは何か」という人向けの説明だ。
+より、一般的な説明は下記の「参考」のリンクを参照のこと。
 
 参考
 ----
