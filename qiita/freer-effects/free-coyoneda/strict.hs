@@ -19,16 +19,10 @@ instance Functor StrictMaybe where
 	fmap _ StrictNothing = StrictNothing
 	fmap f (StrictJust x) = StrictJust $ f x
 
-headIfAllJust :: [StrictMaybe a] -> Maybe a
-headIfAllJust (StrictJust x : ms)
-	| all isStrictJust ms = Just x
-headIfAllJust _ = Nothing
+headIfAllJust :: [StrictMaybe a] -> StrictMaybe a
+headIfAllJust (m : ms) | all isStrictJust ms = m
+headIfAllJust _ = StrictNothing
 
-isStrictJustCoyoneda :: Coyoneda StrictMaybe a -> Bool
-isStrictJustCoyoneda (Coyoneda (StrictJust _) _) = True
-isStrictJustCoyoneda (Coyoneda StrictNothing _) = False
-
-headIfAllJustCoyoneda :: [Coyoneda StrictMaybe a] -> Coyoneda Maybe a
-headIfAllJustCoyoneda (Coyoneda (StrictJust x) f : ms)
-	| all isStrictJustCoyoneda ms = Coyoneda (Just x) f
-headIfAllJustCoyoneda _ = coyoneda Nothing
+headIfAllJustCoyoneda :: [Coyoneda StrictMaybe a] -> Coyoneda StrictMaybe a
+headIfAllJustCoyoneda mms@(m : _) | all (fromContext isStrictJust) mms = m
+headIfAllJustCoyoneda _ = coyoneda StrictNothing
