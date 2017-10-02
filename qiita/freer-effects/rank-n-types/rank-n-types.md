@@ -55,6 +55,153 @@ maybe :: b -> (a -> b) -> Maybe a -> b
 
 ### ランク2多相(rank-2 type)
 
+#### うまくいかない
+
+つぎのコードをみてみよう。
+
+```hs:bad.hs
+fun :: ([a] -> [a]) -> [Integer] -> [Char] -> ([Integer], [Char])
+fun f ns cs = (f ns, f cs)
+```
+
+たとえば、fun reverse [1, 2, 3] "hello"のようにすると、
+([3,2,1],"olleh")に評価される、とふつうは思うだろう。
+しかし、この関数funは定義できない。
+
+#### 多相関数を引数にとる関数は定義できない
+
+標準的なHaskellでは、多相関数を引数にとる関数を定義することはできない。
+うえで定義しようとした関数funは、つぎのような関数を同時に定義しようとしていた。
+
+```hs
+fun1 :: ([Int] -> [Int]) -> [Integer] -> [Char] -> ([Integer], [Char])
+fun2 :: ([Double] -> [Double]) -> [Integer] -> [Char] -> ([Integer], [Char])
+fun3 :: ([Integer] -> [Integer]) -> [Integer] -> [Char] -> ([Integer], [Char])
+fun4 :: ([Char] -> [Char]) -> [Integer] -> [Char] -> ([Integer], [Char])
+fun5 :: ([Bool] -> [Bool]) -> [Integer] -> [Char] -> ([Integer], [Char])
+.
+.
+.
+```
+
+このように、みていくと、みるからにダメそうであることがわかる。
+
+#### それは実はちがう
+
+「多相関数を引数にとる関数が定義できない」だって!?
+そんなバカな。
+僕らのアイドル、関数mapがあるじゃないか!!
+
+```hs
+map :: (a -> b) -> [a] -> [b]
+```
+
+(a -> b)型の多相関数を引数にとってるよね!!!
+まあまあ、落ち着いてください。
+関数mapは、多相関数を引数にとっているのではない。
+うえの例とおなじように考えてみる。
+
+```hs
+map1 :: (Int -> Bool) -> [Int] -> [Bool]
+map2 :: (Double -> Char) -> [Double] -> [Char]
+map3 :: (Bool -> Integer) -> [Bool] -> [Integer]
+map4 :: (Integer -> Integer) -> [Integer] -> [Integer]
+map5 :: (Double -> Int) -> [Double] -> [Int]
+.
+.
+.
+```
+
+このような複数の関数を、いちどに定義したということ。
+関数mapは「多相関数を引数にと」ってはいない。
+
+#### 型変数のスコープ
+
+「多相関数を引数にとる関数」を定義する方法がある。
+標準的なHaskellではムリだ。
+GHCの言語拡張を使う。
+それを紹介するまえに、「型変数のスコープ」を考えてみる。
+もういちど、関数mapの型をみてみよう。
+
+```hs
+map :: (a -> b) -> [a] -> [b]
+```
+
+ふたつの型変数aのところには、おなじ型が、
+ふたつの型変数bのところにも、やはり、おなじ型が、それぞれ、はいる。
+これは型変数a, bともに、そのスコープが、関数mapの型全体であるためだ。
+型変数のスコープを明示するには、予約語forallを使う。
+
+```hs
+map :: forall a b . (a -> b) -> [a] -> [b]
+```
+
+このような書きかたを有効にするには、ExplicitForAll、または、
+RankNTypes拡張を指定する。
+
+#### 多相関数を引数にとる関数が定義できる
+
+はじめに紹介した関数funを定義するには、RankNTypes拡張を指定したうえで、
+型変数のスコープを明示的に限定する必要がある。
+つぎのようなファイルrankNTypes.hsを作成する。
+
+```hs:rankNTypes.hs
+{-# LANGUAGE RankNTypes #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+fun :: (forall a . [a] -> [a]) -> [Integer] -> [Char] -> ([Integer], [Char])
+fun f ns cs = (f ns, f cs)
+```
+
+対話環境で試してみよう。
+
+```hs
+> :load rankNTypes.hs
+> fun reverse [1, 2, 3] "hello"
+([3,2,1],"olleh")
+```
+
+この関数funは、関数mapとはちがい、「多相関数を引数としてと」る関数だ。
+
+#### 多相関数でなければならなくなる
+
+たとえば、つぎのような、ふたつの定義をくらべてみる。
+ファイルrankNTypes.hsに追加する。
+
+```hs:rankNTypes.hs
+foo :: ([a] -> [a]) -> [a] -> [a]
+foo f xs = f xs
+
+bar :: (forall a . [a] -> [a]) -> [b] -> [b]
+bar f xs = f xs
+```
+
+対話環境で試してみる。
+
+```hs
+> :reload
+> foo reverse "world"
+"dlrow"
+> bar reverse "world"
+"dlrow"
+> foo ("hello" ++) "world"
+"helloworld"
+> bar ("hello" ++) "world"
+
+<interactive>:X:Y: error:
+    .
+    .
+    .
+```
+
+関数fooでは、リストのなかみがChar型の値であることを前提とした関数を、
+引数としてとることができる。
+それにたいして、関数barでは、
+リストのなかみの型が特定の型であるという前提を利用した関数は、
+引数とすることができない。
+関数barでは、リストの構造だけをいじる関数に、引数を限定できるということだ。
+このあたりのことは、「ランク2多相の、ふたつの側面」でも説明した。
+
 使用例
 ------
 
