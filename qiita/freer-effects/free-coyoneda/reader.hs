@@ -1,17 +1,13 @@
 {-# LANGUAGE GADTs #-}
 {-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
 
-import Free
-import Coyoneda
+import FreeCoyoneda
 
 data Reader e a where
 	Reader :: Reader e e
 
-runReaderCoyoneda :: Coyoneda (Reader e) a -> e -> a
-runReaderCoyoneda (Coyoneda Reader k) e = k e
-
 ask :: Free (Coyoneda (Reader e)) e
-ask = Join $ Pure <$> coyoneda Reader
+ask = toFC Reader
 
 runReader :: Free (Coyoneda (Reader e)) a -> e -> a
 runReader m e = case m of

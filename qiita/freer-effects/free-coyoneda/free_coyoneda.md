@@ -298,6 +298,42 @@ MyJust 11
 
 ### Readerモナド
 
+Readerモナドを作ってみよう。
+つぎのようなファイルreader.hsを作成する。
+
+```hs:reader.hs
+{-# LANGUAGE GADTs #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+import FreeCoyoneda
+
+data Reader e a where
+        Reader :: Reader e e
+
+ask :: Free (Coyoneda (Reader e)) e
+ask = toFC Reader
+
+runReader :: Free (Coyoneda (Reader e)) a -> e -> a
+runReader m e = case m of
+        Pure x -> x
+        Join (Coyoneda Reader k) -> runReader (k e) e
+```
+
+対話環境で試してみよう。
+
+```hs
+> :load reader.hs
+> :module + Data.Char
+> (`runReader` 100) $ do x <- ask; return $ chr x
+'d'
+```
+
+Reader型には、引数をとらない値構築子Readerだけがある。
+また値構築子ReaderはGADTによってReader e eのように、
+型引数の、ひとつめとふたつめとが、おなじであるように限定されている。
+これによって、Coyoneda Reader k :: Coyoneda (Reader e) aにおいて、
+kの型が(e -> a)となることが保証される。
+
 ### Writerモナド
 
 ### ReaderとWriterモナドを組み合わせる
