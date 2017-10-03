@@ -386,3 +386,96 @@ Writer型の本質であるw型の値の保持と、モナドの返り値であ�
 Writer型とCoyoneda型に分離されているのがわかる。
 
 ### ReaderとWriterモナドを組み合わせる
+
+ReaderとWriterモナドを組み合わせたモナドを作る。
+うえでみたReaderモナドとWriterモナドとを合わせた型を作る。
+
+```hs:readerWriter
+{-# LANGUAGE GADTs #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+import Control.Arrow
+import Data.Monoid
+
+import FreeCoyoneda
+
+data RW e w a where
+        Reader :: RW e w e
+        Writer :: w -> RW e w ()
+
+ask :: Free (Coyoneda (RW e w)) ()
+ask = toFC Reader
+
+tell :: w -> Free (Coyoneda (RW e w)) ()
+tell = toFC . Writer
+
+sample :: Free (Coyoneda (RW String String)) (String, String)
+sample = do
+        x <- ask
+        tell $ "I say " ++ x ++ ".\n"
+	y <- ask
+	tell $ "You say Good-bye!\n"
+	return (x, y)
+```
+
+#### もともとの意味論での評価
+
+Readerモナド、Writerモナドのそれぞれの意味論で評価する関数runRWを定義する。
+
+```hs:readerWriter.hs
+runRW :: Monoid w => Free (Coyoneda (RW e w)) a -> e -> (a, w)
+runRW m e = case m of
+        Pure x -> (x, mempty)
+	Join (Coyoneda Reader k) -> runRW (k e) e
+	Join (Coyoneda (Writer w) k) -> second (w <>) $ runRW (k ()) e
+```
+
+対話環境で試してみる。
+
+```hs
+> :load readerWriter.hs
+> sample `runRW` "hello"
+(("hello","hello"),"I say hello.\nYou say Good-bye!\n")
+```
+
+#### 状態モナドとしての評価
+
+ReaderモナドとWriterモナドの機能を合わせて、状態モナドとして評価する。
+
+```hs:readerWriter.hs
+runStateRW :: Free (Coyoneda (RW s s)) a -> s -> (a, s)
+runStateRW m s = case m of
+        Pure x -> (x, s)
+        Join (Coyoneda Reader k) -> runStateRW (k s) s
+	Join (Coyoneda (Writer s') k) -> runStateRW (k ()) s'
+```
+
+対話環境で試してみる。
+
+```hs
+> :reload
+> sample `runStateRW` "hello"
+(("hello","I say hello.\n"),"You say Good-bye!\n")
+```
+
+まとめ
+------
+
+引数をとる型をファンクターに変換することのできるデータ型Coyonedaを、
+定義して使ってみた。
+やっていることは、値と、それに適用する関数とを、別々に保存しているだけだ。
+Coyonedaを使う例として、正格評価されるデータ型を、
+遅延評価するようにする例を挙げた。
+またFreeモナドと組み合わせて使うことで、
+新しいモナドの作成がより効率的にできる
+(Functorクラスのインスタンスにする手間がはぶける)ことを示した。
+ReaderモナドとWriterモナドの例は、Freeモナドでの例を、Coyonedaを追加して
+書き直したものだ。
+
+参考
+----
+
+* [モナドとわたしとコモナド: Freeモナドを超えた!?operationalモナドを使ってみよう](
+	http://fumieval.hatenablog.com/entry/2013/05/09/223604 )
+* [YonedaとCoYoneda、そしてFunctor](
+	http://d.hatena.ne.jp/its_out_of_tune/20130601/1370109743 )
