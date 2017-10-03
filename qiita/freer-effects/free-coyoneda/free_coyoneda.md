@@ -286,6 +286,15 @@ runMyMaybe = \case
 
 このように、型MyMaybeそのものをMonadクラスのインスタンスにしなくても、
 Free (Coyoneda MyMaybe)のように変換することでモナドとすることができる。
+対話環境で試してみよう。
+
+```
+> :load maybe.hs
+> runMyMaybe $ sample 8
+MyNothing
+> runMyMaybe $ sample 15
+MyJust 11
+```
 
 ### Readerモナド
 
