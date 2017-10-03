@@ -336,4 +336,53 @@ kの型が(e -> a)となることが保証される。
 
 ### Writerモナド
 
+Writerモナドを作ってみよう。
+つぎのようなファイルwriter.hsを作成する。
+
+```hs:writer.hs
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE GADTs #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+import Control.Arrow
+import Data.Monoid
+
+import FreeCoyoneda
+
+data Writer w a where
+        Writer :: w -> Writer w ()
+
+tell :: w -> Free (Coyoneda (Writer w)) ()
+tell = toFC . Writer
+
+runWriter :: Monoid w => Free (Coyoneda (Writer w)) a -> (a, w)
+runWriter = \case
+        Pure x -> (x, mempty)
+        Join (Coyoneda (Writer w) k) -> second (w <>) . runWriter $ k ()
+
+sample :: Free (Coyoneda (Writer String)) Integer
+sample = do
+        tell "x = 8\n"
+        x <- return 8
+        tell "y = 5\n"
+        y <- return 5
+        tell $ "x * y = " ++ show (x * y) ++ "\n"
+        return $ x * y
+```
+
+対話環境で試してみる。
+
+```hs
+> :load writer.hs
+> runWriter sample
+(40,"x = 8\ny = 5\nx * y = 40\n")
+```
+
+Writer型は、ログの記録のための型wを引数とする値構築子Writerをもつ。
+この値構築子の型はWriter w ()となる。
+値(Coyoneda Writer k :: Coyoneda (Writer w) a)における関数kの型は、
+(() -> a)となる。
+Writer型の本質であるw型の値の保持と、モナドの返り値であるa型の値とが、
+Writer型とCoyoneda型に分離されているのがわかる。
+
 ### ReaderとWriterモナドを組み合わせる
