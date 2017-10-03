@@ -230,3 +230,65 @@ instance Functor t => Monad (Free t) where
         Pure x >>= f = f x
         Join tx >>= f = Join $ (f =<<) <$> tx
 ```
+
+### ファンクタならFreeでモナドになる
+
+ファンクタならFreeでモナドになる。
+Coyonedaなら、引数をとる型をファンクタにできる。
+つまりFreeとCoyonedaを組み合わせれば、引数をとる型なら何でもモナドになる。
+つぎのようにモジュールFreeCoyonedaを作成する。
+
+```hs:FreeCoyoneda.hs
+{-# OPTIOnS_GHC -Wall -fno-warn-tabs #-}
+
+module FreeCoyoneda (module Free, module Coyoneda, toFC) where
+
+import Free
+import Coyoneda
+
+toFC :: t a -> Free (Coyoneda t) a
+toFC = Join . (Pure <$>) . coyoneda
+```
+
+toFCによって、(t a)のようにあらわされる型の値を、
+Free (Coyoneda t) aのような型に変換することができる。
+これはモナドになる。
+
+### MyMaybeモナド
+
+Maybeモナドと同等の型を作成し、それをFreeとCoyonedaでモナドに変換してみよう。
+つぎのようなファイルmaybe.hsを作成する。
+
+```hs:maybe.hs
+{-# LANGUAGE LambdaCase #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+import FreeCoyoneda
+
+data MyMaybe a = MyNothing | MyJust a deriving Show
+
+checkPositive :: Integer -> MyMaybe Integer
+checkPositive n
+        | n > 0 = MyJust n
+        | otherwise = MyNothing
+
+sample :: Integer -> Free (Coyoneda MyMaybe) Integer
+sample n = do
+        m <- toFC . checkPositive $ n - 9
+        return $ m + 5
+
+runMyMaybe :: Free (Coyoneda MyMaybe) a -> MyMaybe a
+runMyMaybe = \case
+        Pure x -> MyJust x
+        Join (Coyoneda MyNothing _) -> MyNothing
+        Join (Coyoneda (MyJust x) k) -> runMyMaybe $ k x
+```
+
+このように、型MyMaybeそのものをMonadクラスのインスタンスにしなくても、
+Free (Coyoneda MyMaybe)のように変換することでモナドとすることができる。
+
+### Readerモナド
+
+### Writerモナド
+
+### ReaderとWriterモナドを組み合わせる
