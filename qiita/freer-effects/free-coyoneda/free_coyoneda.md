@@ -201,3 +201,32 @@ Coyoneda型の値に変換したほうでは評価に1秒しかかからない�
 
 FreeモナドとCoyonedaを組み合わせる
 ----------------------------------
+
+Coyoneda型を利用する例を、ムリヤリ、作ってみたが、
+やはりCoyonedaはFreeモナドと組み合わせてこそ、
+本当の力を発揮することができる。
+
+もういちど、Freeモナドの定義をみてみよう。
+
+```hs:Free.hs
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+module Free where
+
+data Free t a
+        = Pure a
+        | Join (t (Free t a))
+
+instance Functor t => Functor (Free t) where
+        f `fmap` Pure x = Pure $ f x
+        f `fmap` Join tx = Join $ fmap f <$> tx
+
+instance Functor t => Applicative (Free t) where
+        pure = Pure
+        Pure f <*> m = f <$> m
+        Join tf <*> m = Join $ (<*> m) <$> tf
+
+instance Functor t => Monad (Free t) where
+        Pure x >>= f = f x
+        Join tx >>= f = Join $ (f =<<) <$> tx
+```
