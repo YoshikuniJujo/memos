@@ -45,7 +45,14 @@ Free (Coyoneda t) a
 ```hs
 Freer t a
         = Pure a
-        | forall x . Join (t x) (x -> Freer t a)
+        | forall x . Bind (t x) (x -> Freer t a)
+```
+
+Freerモナドのデータ型について
+-----------------------------
+
+```hs
+Bind (t x) (x -> Freer t a)
 ```
 
 インスタンス宣言の比較
