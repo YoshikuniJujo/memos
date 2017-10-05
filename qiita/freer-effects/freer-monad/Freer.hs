@@ -21,3 +21,6 @@ instance Applicative (Freer t) where
 instance Monad (Freer t) where
 	Pure x >>= f = f x
 	Bind tx k >>= f = Bind tx $ k >=> f
+
+freer :: t a -> Freer t a
+freer = (`Bind` Pure)

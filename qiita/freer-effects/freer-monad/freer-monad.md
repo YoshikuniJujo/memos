@@ -167,8 +167,49 @@ instance Applicative (Freer t) where
         Bind tx k <*> m = Join tx $ k >=> (<$> m)
 ```
 
+文脈つきの値をFreerモナドに変換する関数を作成する。
+ファイルFreer.hsに関数freerの定義を追加する。
+
+```hs:Freer.hs
+freer :: t a -> Freer t a
+freer = (`Bind` Pure)
+```
+
 Readerモナド
 ------------
+
+おなじみのReaderモナドを定義してみよう。
+ファイルreader.hsを作る。
+
+```hs:reader.hs
+{-# LANGUAGE GADTs #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+import Freer
+
+data Reader e a where
+        Reader :: Reader e e
+
+ask :: Freer (Reader e) e
+ask = freer Reader
+
+runReader :: Freer (Reader e) a -> e -> a
+runReader m e = case m of
+        Pure x -> x
+        Bind Reader k -> runReader (k e) e
+```
+
+FreeモナドとCoyonedaの組み合わせを説明したときの定義と、
+ほとんど、おなじだ。
+データ型Coyonedaを作っていないぶん、すこしシンプルになる。
+試してみよう。
+
+```hs
+> :load reader.hs
+> :module + Data.Char
+> (`runReader` 100) $ do x <- ask; return $ chr x
+'d'
+```
 
 Writerモナド
 ------------
