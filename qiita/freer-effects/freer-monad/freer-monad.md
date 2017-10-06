@@ -303,7 +303,7 @@ Getがきたら、そのときの状態sを関数kにわたす。
 式k sはFreer (State s) a型の値に評価され、再帰的に関数runStateが適用される。
 Put s'がきたら、状態をs'に更新してから、つづきのモナドとなるk ()に、
 関数runStateを適用する。
-モナドsampleの例をみてみよう。
+使用例sampleを定義する。
 ファイルstate.hsに追加する。
 
 ```hs:state.hs
