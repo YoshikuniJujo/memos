@@ -156,18 +156,91 @@ Left "250 is divided by 0"
 
 ### エラーでも状態を保持する
 
+状態モナドとエラーモナドを混ぜ合わせたものを処理する、
+もうひとつのやりかたがある。
+こちらのやりかただと、エラーであっても状態が保持できる。
+ファイルstateError.hsに関数runSE'を定義する。
+
+```hs:stateError.hs
+runSE' :: Freer (SE s e) a -> s -> (Either e a, s)
+runSE' m s = case m of
+        Pure x -> (Right x, s)
+        Get s' `Bind` k -> runSE' (k ()) s'
+        Exc e `Bind` _k -> (Left e, s)
+```
+
+試してみよう。
+
+```hs
+> :load stateError.hs
+> sample1 `runSE'` 8
+(Right 60,5)
+> sample1 `runSE'` 5
+(Left "60 is divided by 0",0)
+> sample1 `runSE'` 3
+(Left "250 is divided by 0",0)
+```
+
 ### エラーからの復帰
 
+エラーから復帰するための仕組みも作る。
+
+```hs:stateError.hs
+catchError :: Freer (SE s e) a -> (e -> Freer (SE s e) a) -> Freer (SE s e) a
+m `catchError` h = case m of
+        Pure x -> return x
+        Exc e `Bind` _k -> h e
+        mx `Bind` k -> mx `Bind` ((`catchError` h) . k)
+```
+
+単純な値である(Pure x)では、その値をそのままかえす。
+エラーが発生(Exc e)のときには、エラーハンドラーhにエラーをわたす。
+それ以外のとき(Get, Put)には、それぞれの処理をおこなったあとに、
+再帰的にエラーからの復帰をするために、
+(\`catchError\` h)とkを関数合成しておく。
+
 ### エラーからの復帰を含むサンプル
+
+エラーからの復帰を含むサンプルを定義する。
+
+```hs:stateError.hs
+divMemory :: Integer -> Freer (SE Integer String) ()
+divMemory n = do
+        a <- get
+        b <- a `safeDiv` n
+        put b
+
+sample2 :: Integer -> Freer (SE Integer String) Integer
+sample2 n = do
+        divMemory n
+        a <- get
+        return $ a * 10
+```
+
+メモリーの値を引数nでわり、その結果を取り出して、10倍してかえす。
+nが0ならばエラーになる。
+エラーからの復帰を試してみよう。
+
+```hs
+> :reload
+> sample2 2 `runSE` 8
+Right (40,4)
+> sample2 0 `runSE` 8
+Left "8 is divided by 0"
+> sample2 0 `catchError` const (return 100) `runSE` 8
+Right (100,8)
+```
 
 状態モナドとエラーモナドとを、それぞれに処理する
 ------------------------------------------------
 
+状態モナドとエラーモナドとの、それぞれの処理をわけることを考える。
+
 共通するかたち
 --------------
 
-さらに...を追加する
--------------------
+Writerモナドを追加する
+----------------------
 
 拡張性がない
 ------------

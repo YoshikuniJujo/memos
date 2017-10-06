@@ -54,21 +54,27 @@ sample1 = do
 
 catchError :: Freer (SE s e) a -> (e -> Freer (SE s e) a) -> Freer (SE s e) a
 m `catchError` h = case m of
+	Pure x -> return x
+	Exc e `Bind` _k -> h e
+	mx `Bind` k -> mx `Bind` ((`catchError` h) . k)
+
+badCatchError :: Freer (SE s e) a -> (e -> Freer (SE s e) a) -> Freer (SE s e) a
+m `badCatchError` h = case m of
+	Pure x -> return x
 	Exc e `Bind` _k -> h e
 	_ -> m
 
-sample2 :: Freer (SE Integer String) Integer
-sample2 = do
+divMemory :: Integer -> Freer (SE Integer String) ()
+divMemory n = do
 	a <- get
-	modify (subtract 5)
-	modify (* 2)
-	b <- get
-	c <- 60 `safeDiv` b `catchError` const (return 50000)
-	put a
-	modify (subtract 3)
-	d <- get
-	e <- 250 `safeDiv` d
-	return $ c + e
+	b <- a `safeDiv` n
+	put b
+
+sample2 :: Integer -> Freer (SE Integer String) Integer
+sample2 n = do
+	divMemory n
+	a <- get
+	return $ a * 10
 
 runState :: Freer (SE s e) a -> s -> Freer (SE s e) (a, s)
 runState m s = case m of
