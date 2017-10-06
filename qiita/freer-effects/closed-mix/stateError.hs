@@ -28,6 +28,13 @@ runSE m s = case m of
 	Put s' `Bind` k -> runSE (k ()) s'
 	Exc e `Bind` _k -> Left e
 
+runSE' :: Freer (SE s e) a -> s -> (Either e a, s)
+runSE' m s = case m of
+	Pure x -> (Right x, s)
+	Get `Bind` k -> runSE' (k s) s
+	Put s' `Bind` k -> runSE' (k ()) s'
+	Exc e `Bind` _k -> (Left e, s)
+
 catchError :: Freer (SE s e) a -> (e -> Freer (SE s e) a) -> Freer (SE s e) a
 m `catchError` h = case m of
 	Exc e `Bind` _k -> h e
