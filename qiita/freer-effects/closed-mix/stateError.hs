@@ -35,17 +35,30 @@ runSE' m s = case m of
 	Put s' `Bind` k -> runSE' (k ()) s'
 	Exc e `Bind` _k -> (Left e, s)
 
+safeDiv :: Integer -> Integer -> Freer (SE s String) Integer
+safeDiv n 0 = throwError $ show n ++ " is divided by 0"
+safeDiv n m = return $ n `div` m
+
+sample1 :: Freer (SE Integer String) Integer
+sample1 = do
+	a <- get
+	modify (subtract 5)
+	modify (* 2)
+	b <- get
+	c <- 60 `safeDiv` b
+	put a
+	modify (subtract 3)
+	d <- get
+	e <- 250 `safeDiv` d
+	return $ c + e
+
 catchError :: Freer (SE s e) a -> (e -> Freer (SE s e) a) -> Freer (SE s e) a
 m `catchError` h = case m of
 	Exc e `Bind` _k -> h e
 	_ -> m
 
-safeDiv :: Integer -> Integer -> Freer (SE s String) Integer
-safeDiv n 0 = throwError $ show n ++ " is divided by 0"
-safeDiv n m = return $ n `div` m
-
-sample :: Freer (SE Integer String) Integer
-sample = do
+sample2 :: Freer (SE Integer String) Integer
+sample2 = do
 	a <- get
 	modify (subtract 5)
 	modify (* 2)
