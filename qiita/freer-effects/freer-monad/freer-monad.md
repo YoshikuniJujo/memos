@@ -268,5 +268,65 @@ sample = do
 状態モナド
 ----------
 
+状態モナドを定義する。
+まえにReaderモナドとWriterモナドを、まぜて状態モナドとして解釈したことがあるが、
+だいたいおなじことをすればいい。
+ファイルstate.hsを作成する。
+
+```hs:state.hs
+{-# LANGUAGE GADTs #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+import Freer
+
+data State s a where
+        Get :: State s s
+        Put :: s -> State s ()
+
+get :: Freer (State s) s
+get = freer Get
+
+put :: s -> Freer (State s) ()
+put = freer . Put
+
+modify :: (s -> s) -> Freer (State s) ()
+modify f = put . f =<< get
+
+runState :: Freer (State s) a -> s -> (a, s)
+runState m s = case m of
+        Pure x -> (x, s)
+        Bind Get k -> runState (k s) s
+        Bind (Put s') k -> runState (k ()) s'
+```
+
+Getがきたら、そのときの状態sを関数kにわたす。
+式k sはFreer (State s) a型の値に評価され、再帰的に関数runStateが適用される。
+Put s'がきたら、状態をs'に更新してから、つづきのモナドとなるk ()に、
+関数runStateを適用する。
+モナドsampleの例をみてみよう。
+ファイルstate.hsに追加する。
+
+```hs:state.hs
+sample :: Freer (State Integer) Integer
+sample = do
+        modify (+ 8)
+        modify (* 5)
+        s <- get
+        put 4
+	modify (+ 3)
+        s' <- get
+        return $ s + s'
+```
+
+対話環境で試してみる。
+
+```hs
+> :load state.hs
+> sample `runState` 4
+(67,7)
+> sample `runState` 2
+(57,7)
+```
+
 エラーモナド
 ------------
