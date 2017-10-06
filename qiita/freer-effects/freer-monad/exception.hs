@@ -11,7 +11,7 @@ throwError = freer . Exc
 runError :: Freer (Exc e) a -> Either e a
 runError = \case
 	Pure x -> Right x
-	Bind (Exc e) _ -> Left e
+	Exc e `Bind` _k -> Left e
 
 catchError :: Freer (Exc e) a -> (e -> Freer (Exc e) a) -> Freer (Exc e) a
 m `catchError` h = case m of

@@ -196,7 +196,7 @@ ask = freer Reader
 runReader :: Freer (Reader e) a -> e -> a
 runReader m e = case m of
         Pure x -> x
-        Bind Reader k -> runReader (k e) e
+        Reader `Bind` k -> runReader (k e) e
 ```
 
 FreeモナドとCoyonedaの組み合わせを説明したときの定義と、
@@ -235,7 +235,7 @@ tell = freer . Writer
 runWriter :: Monoid w => Freer (Writer w) a -> (a, w)
 runWriter = \case
         Pure x -> (x, mempty)
-        Bind (Writer w) k -> second (w <>) . runWriter $ k ()
+        Writer w `Bind` k -> second (w <>) . runWriter $ k ()
 ```
 
 こちらも、FreeモナドとCoyonedaの組み合わせのところで説明したWriterモナドと、
@@ -295,8 +295,8 @@ modify f = put . f =<< get
 runState :: Freer (State s) a -> s -> (a, s)
 runState m s = case m of
         Pure x -> (x, s)
-        Bind Get k -> runState (k s) s
-        Bind (Put s') k -> runState (k ()) s'
+        Get `Bind` k -> runState (k s) s
+        Put s' `Bind` k -> runState (k ()) s'
 ```
 
 Getがきたら、そのときの状態sを関数kにわたす。
@@ -330,3 +330,83 @@ sample = do
 
 エラーモナド
 ------------
+
+エラーモナドを定義する。
+ファイルexception.hsを作る。
+
+```hs:exception.hs
+{-# LANGUAGE LambdaCase #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+import Freer
+
+newtype Exc e a = Exc e
+
+throwError :: e -> Freer (Exc e) a
+throwerror = freer . Exc
+
+runError :: Freer (Exc e) a -> Either e a
+runError = \case
+        Pure x -> Right x
+        Exc e `Bind` _k -> Left e
+```
+
+値Exc eがあれば、それ以降の処理(\_k)はおこなわれずに、Left eに評価される。
+0除算をエラーとする関数safeDivを定義する。
+
+```hs:exception.hs
+safeDiv :: Integer -> Integer -> Freer (Exc String) Integer
+safeDiv n 0 = throwError $ show n ++ " is divided by 0"
+safeDiv n m = return $ n `div` m
+```
+
+対話環境で試してみる。
+
+```hs
+> runError $ do x <- 30 `safeDiv` 6; y <- 45 `safeDiv` 3; return $ x + y
+Right 20
+> runError $ do x <- 30 `safeDiv` 6; y <- 45 `safeDiv` 0; return $ x + y
+Left "45 is divided by 0"
+```
+
+### エラーからの復帰
+
+エラーから復帰する仕組みも作ろう。
+ファイルexception.hsに関数catchErrorを定義する。
+
+```hs:exception.hs
+catchError :: Freer (Exc e) a -> (e -> Freer (Exc e) a) -> Freer (Exc e) a
+m `catchError` h = case m of
+        Pure x -> return x
+        Bind (Exc e) _k -> h e
+```
+
+値Exc eがあったときにはエラーハンドラー関数hをエラー値eに適用する。
+サンプルを定義する。
+
+```hs:exception.hs
+sample :: Integer -> Integer -> Freer (Exc String) Integer
+sample n m = do
+        a <- 50 `safeDiv` n
+        b <- (100 `safeDiv` m) `catchError` const (return 50000)
+        return $ a + b
+```
+
+対話環境で試してみよう。
+
+```hs
+> runError $ sample 5 10
+Right 20
+> runError $ sample 0 10
+Left "50 is divided by 0"
+> runError $ sample 5 0
+Right 50010
+```
+
+まとめ
+------
+
+Freerモナドを使って、Reader、Writer、状態、エラーの、それぞれのモナドを作った。
+「モナドらしい」部分がデータ型Freerに切り出されているために、
+それぞれに定義されるデータ型は、それぞれのモナドの本質的な中核部分のみを
+定義するだけですんでいる。
