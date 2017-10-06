@@ -235,6 +235,32 @@ Right (100,8)
 ------------------------------------------------
 
 状態モナドとエラーモナドとの、それぞれの処理をわけることを考える。
+うえで定義した関数catchErrorをみてほしい。
+この処理は、見かたをかえれば、エラーモナドだけを処理していると
+考えることができる。
+これとおなじように考えれば、状態モナドだけ、エラーモナドだけを処理する
+関数を書くことができる。
+まずは、状態モナドの部分だけを処理する関数を書く。
+ファイルstateError.hsに関数runStateを定義する。
+
+```hs:stateError.hs
+runState :: Freer (SE s e) a -> a -> Freer (SE s e) (a, s)
+runState m s = case m of
+        Pure x -> return (x, s)
+        Get `Bind` k -> runState (k s) s
+        Put s' `Bind` k -> runState (k ()) s'
+        mx `Bind` k -> mx `Bind` ((`runState` s) . k)
+```
+
+(ここに関数runStateの説明を書く)。
+関数runErrorを定義する。
+
+```hs:stateError.hs
+runError :: ...(あとで書く)...
+runError = ...(あとで書く)...
+```
+
+(ここに関数runErrorの説明を書く)。
 
 共通するかたち
 --------------
