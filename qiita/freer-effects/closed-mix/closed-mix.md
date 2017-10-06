@@ -252,15 +252,25 @@ runState m s = case m of
         mx `Bind` k -> mx `Bind` ((`runState` s) . k)
 ```
 
-(ここに関数runStateの説明を書く)。
-関数runErrorを定義する。
+状態モナドの機能(Get, Put)に対しては、その機能を展開する。
+それ以外の機能(Exc)に対しては、
+関数catchErrorのときとおなじように、
+その機能を展開したあとに状態モナドの機能が展開されるように、
+(\`runState\` s)を再帰的に適用する。
+つぎに、関数runErrorを定義する。
 
 ```hs:stateError.hs
-runError :: ...(あとで書く)...
-runError = ...(あとで書く)...
+runError :: Freer (SE s e) a -> Freer (SE s e) (Either e a)
+runError = \case
+        Pure x -> return $ Right x
+        Exc e `Bind` _k -> return $ Left e
+	mx `Bind` k -> mx `Bind` (runError . k)
 ```
 
-(ここに関数runErrorの説明を書く)。
+おなじく、エラーモナドの機能(Exc)に対しては、その機能を展開する。
+それ以外の機能(Get, Put)に対しては、
+その機能を展開したあとにエラーモナドの機能が展開されるように、
+runErrorを再帰的に適用する。
 
 共通するかたち
 --------------
