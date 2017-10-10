@@ -388,8 +388,128 @@ Left "250 is divided by 0"
 
 ### Writerモナドを追加する
 
-共通するかたち
---------------
+さて、状態モナドとエラーモナドにWriterモナドをつけ加える。
+まずは、データ型に値構築子Writerを追加で定義する。
+
+```hs:stateErrorWriter.hs
+data SE s e w a where
+        Get :: SE s e w s
+        Put :: s -> SE s e w ()
+        Exc :: e -> SE s e w a
+        Writer :: w -> SE s e w ()
+```
+
+対話環境に再読み込みしてみる。
+
+```hs:
+> :reload
+(型エラーが発生する)
+```
+
+型エラーがなくなるまで型構築子SEの引数にwを追加していく。
+以下の10ヶ所を変更することになる。
+
+```hs:stateErrorWriter.hs
+.
+.
+.
+get :: Freer (SE s e w) s
+.
+.
+.
+put :: s -> Freer (SE s e w) ()
+.
+.
+.
+modify :: (s -> s) -> Freer (SE s e w) ()
+.
+.
+.
+throwError :: e -> Freer (SE s e w) a
+.
+.
+.
+catchError :: Freer (SE s e w) a -> (e -> Freer (SE s e w) a -> Freer (SE s e w) a
+.
+.
+.
+runState :: Free (SE s e w) a -> s -> Freer (SE s e w) (a, s)
+.
+.
+.
+runError :: Free (SE s e w) a -> Freer (SE s e w) (Either e a)
+.
+.
+.
+runPure :: Freer (SE s e w) a -> a
+.
+.
+.
+safeDif :: Integer -> Integer -> Freer (SE s String String) Integer
+.
+.
+.
+sample :: Freer (SE Integer String String) Integer
+.
+.
+.
+```
+
+Writerモナドの機能として関数tellを定義する。
+
+```hs:stateErrorWriter.hs
+tell :: w -> Freer (SE s e w) ()
+tell = freer . Writer
+```
+
+関数runWriterを定義する。
+まずは、導入するモジュールを指定する。
+ファイルstateErrorWriter.hsの言語拡張のつぎの行に、
+つぎのように追加する。
+
+```hs:stateErrorWriter.hs
+import Control.Arrow
+import Data.Monoid
+```
+
+関数runWriterを定義する。
+
+```hs:stateErrorWriter.hs
+runWriter :: Monoid w => Freer (SE s e w) a -> Freer (SE s e w) (a, w)
+runWriter = \case
+        Pure x -> return (x, mempty)
+        Writer w `Bind` k -> second (w <>) <$> runWriter (k ())
+        mx `Bind` k -> mx `Bind` (runWriter . k)
+```
+
+関数safeDivが、わり算のログを保存するようにする。
+
+```hs:stateErrorWriter.hs
+safeDiv :: Integer -> Integer -> Freer (SE s String String) Integer
+safeDiv n 0 = throwError $ show n ++ " is divided by 0"
+safeDiv n m = do
+        tell $ show n ++ " `div` " ++ show m ++ "\n"
+        return $ n `div` m
+```
+
+対話環境で試してみる。
+
+```hs
+> :reload
+> runPure . runError . runWriter $ sample `runState` 8
+Right ((70,5),"60 `div` 3\n250 `div` 5\n")
+```
+
+### Writerモナドを追加するのに必要だったこと
+
+Writerモナドを追加するのに必要だったことは、
+
+* 値構築子Writerの追加
+* 型宣言の修正
+* 関数tellの定義
+* 関数runWriterの定義
+
+だった。
 
 拡張性がない
 ------------
@@ -404,3 +524,9 @@ Haskellのデータ型は閉じているので、
 
 まとめ
 ------
+
+まずは、状態モナドとエラーモナドを混ぜ合わせたモナドを作り、
+さらにそれにWriterモナドも追加した。
+いまの実装では、モナドの機能の追加のためには、
+データ型に値構築子を追加する必要があり、
+たとえば、別モジュールで機能を追加することはできない。
