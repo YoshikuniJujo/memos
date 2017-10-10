@@ -303,6 +303,9 @@ Writerモナドを追加する
 ### 状態モナドとエラーモナド
 
 状態モナドとエラーモナドの混ぜ合わせのコードを、もういちど、みてみよう。
+復習という意味もあるが、
+それだけでなく、Writerモナドを追加するための下準備として、
+うえで紹介した内容をくりかえす。
 つぎの内容のファイルstateErrorWriter.hsを作成する。
 
 ```hs:stateErrorWriter.hs
@@ -326,7 +329,7 @@ put = freer . Put
 modify :: (s -> s) -> Freer (SE s e) ()
 modify f = put . f =<< get
 
-throwError :: e -> Freer (SE s e) ()
+throwError :: e -> Freer (SE s e) a
 throwError = freer . Exc
 
 catchError :: Freer (SE s e) a -> (e -> Freer (SE s e) a) -> Freer (SE s e) a
@@ -351,6 +354,36 @@ runPure :: Freer (SE s e) a -> a
 runPure = `case
         Pure x -> x
         _ -> error "remain State or Error"
+```
+
+サンプルも定義しておく。
+
+```hs:stateErrorWriter.hs
+safeDiv :: Integer -> Integer -> Freer (SE s String) Integer
+safeDiv n 0 = throwError $ show n ++ " is divided by 0"
+safeDiv n m = return $ n `div` m
+
+sample :: Freer (SE Integer String) Integer
+sample = do
+        a <- get
+        modify (subtract 5)
+        b <- get
+        c <- 60 `safeDiv` b
+        put a
+        modify (subtract 3)
+        d <- get
+        e <- 250 `safeDiv` d
+        return $ c + e
+```
+
+対話環境で試しておく。
+
+```hs
+> :load stateErrorWriter.hs
+> runPure . runError $ sample `runState` 8
+Right (70,5)
+> runPure . runError $ sample `runState` 3
+Left "250 is divided by 0"
 ```
 
 ### Writerモナドを追加する
