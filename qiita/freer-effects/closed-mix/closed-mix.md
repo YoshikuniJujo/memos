@@ -271,12 +271,41 @@ runError = \case
 それ以外の機能(Get, Put)に対しては、
 その機能を展開したあとにエラーモナドの機能が展開されるように、
 runErrorを再帰的に適用する。
+関数runStateとrunErrorとを適用したあと、
+型としてはFreer ...となるが、
+Get、Put、Excはすべて処理されてなくなるのでPureだけが残る。
+そのPureから値を取り出す関数を作っておこう。
 
-共通するかたち
---------------
+```hs:stateError.hs
+runPure :: Freer (SE s e) a -> a
+runPure = \case
+        Pure x -> x
+        _ -> error "remain State or Error"
+```
+
+対話環境で試してみよう。
+
+```hs
+> :reload
+> runPure . runError $ sample1 `runState` 8
+Right (60,5)
+> runPure . runError $ sample1 `runState` 3
+Left "250 is divided by 0"
+> runPure $ runError sample1 `runState` 8
+(Right 60,5)
+> runPure $ runError sample1 `runState` 3
+(Left "250 is divided by 0",0)
+```
 
 Writerモナドを追加する
 ----------------------
+
+### 状態モナドとエラーモナド
+
+### Writerモナドを追加する
+
+共通するかたち
+--------------
 
 拡張性がない
 ------------
