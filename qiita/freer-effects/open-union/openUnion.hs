@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE ExistentialQuantification, GADTs #-}
 {-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
 
 import Unsafe.Coerce
@@ -17,3 +17,25 @@ fromHetero _ = error "This function is only for `hetero'"
 
 doubleValue :: UnionValue
 doubleValue = UnionValue (123 :: Double)
+
+data Union a = forall t . Union (t a)
+
+data State s a where
+	Get :: State s s
+	Put :: s -> State s ()
+
+data Exc e a where
+	Exc :: e -> Exc e a
+	deriving Show
+
+effects :: [Union ()]
+effects = [
+	Union $ Put (123 :: Integer),
+	Union $ Exc "hello",
+	Union $ Writer "world" ]
+
+data Writer w a where
+	Writer :: w -> Writer w ()
+
+fromUnion :: Union a -> t a
+fromUnion (Union tx) = unsafeCoerce tx
