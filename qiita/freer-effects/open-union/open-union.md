@@ -32,13 +32,21 @@ Freer Effectsが、だいたいわかった: 10. 存在型による拡張可能�
 		+ 両方のモナドを一度に処理する
 		+ それぞれのモナドを、それぞれに処理する
 10. 存在型による拡張可能なデータ構造(Open Union)
-11. Open Unionを型によって安全にする
-12. モナドを混ぜ合わせる(開いた型で)
+11. 追加の言語拡張
+	1. ScopedTypeVariables拡張
+	2. TypeOperators拡張
+	3. KindSignatures拡張
+	4. DataKinds拡張
+	5. MultiParamTypeClasses拡張
+	6. FlexibleInstances拡張
+	7. OVERLAPSプラグマ
+12. Open Unionを型によって安全にする
+13. モナドを混ぜ合わせる(開いた型で)
 	* FreeモナドとOpen Unionを組み合わせる
 	* 状態モナドにエラーモナドを追加する
-13. Freer Effectsで、IOモナドなどの、既存のモナドを使用する
-14. 関数を保管しておくデータ構造による効率化
-15. いろいろなEffect
+14. Freer Effectsで、IOモナドなどの、既存のモナドを使用する
+15. 関数を保管しておくデータ構造による効率化
+16. いろいろなEffect
 	* 関数handleRelayなどを作成する
 	* NonDetについて、など
 
