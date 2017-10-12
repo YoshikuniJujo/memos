@@ -1,4 +1,4 @@
-module Eff where
+module Eff (Eff, send) where
 
 import Freer
 import OpenUnion

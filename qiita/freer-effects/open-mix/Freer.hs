@@ -1,7 +1,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
 
-module Freer where
+module Freer (Freer(..), freer) where
 
 import Control.Monad ((>=>))
 
