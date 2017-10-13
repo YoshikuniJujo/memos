@@ -1,4 +1,4 @@
-{-# LANGUAGE ExplicitForAll #-}
+{-# LANGUAGE ExplicitForAll, ScopedTypeVariables #-}
 {-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
 
 revAdd0 :: [a] -> [a] -> [a]
@@ -22,5 +22,19 @@ revAdd2 :: (forall a . [a] -> [a] -> [a])
 revAdd2 xs ys = rxs ++ ys
 	where
 	rxs :: (forall a . [a])
+	rxs = reverse xs
+	-}
+
+revAdd3 :: forall a . [a] -> [a] -> [a]
+revAdd3 xs ys = rxs ++ ys
+	where
+	rxs :: [a]
+	rxs = reverse xs
+
+{-
+revAdd3' :: (forall a . [a] -> [a] -> [a])
+revAdd3' xs ys = rxs ++ ys
+	where
+	rxs :: [a]
 	rxs = reverse xs
 	-}
