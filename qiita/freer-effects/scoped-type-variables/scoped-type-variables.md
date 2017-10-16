@@ -210,6 +210,13 @@ revAddAnnot = (\xs ys -> let rxs :: [a]; rxs = reverse xs in rxs ++ ys)
 
 型宣言で型変数を導入したのと、おなじように、予約語forallを明示する。
 型変数のスコープを、型注釈の対象である表現へと、広げることができる。
+試してみよう。
+
+```hs
+> :reload
+> revAddAnnot "hello" "world"
+"ollehworld"
+```
 
 ### パターンでの型変数の導入
 
