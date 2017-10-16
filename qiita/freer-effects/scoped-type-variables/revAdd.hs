@@ -38,3 +38,6 @@ revAdd3' xs ys = rxs ++ ys
 	rxs :: [a]
 	rxs = reverse xs
 	-}
+
+revAddAnnot = (\xs ys -> let rxs :: [a]; rxs = reverse xs in rxs ++ ys)
+	:: forall a . [a] -> [a] -> [a]
