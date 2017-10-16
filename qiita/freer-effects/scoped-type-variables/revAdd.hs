@@ -41,3 +41,9 @@ revAdd3' xs ys = rxs ++ ys
 
 revAddAnnot = (\xs ys -> let rxs :: [a]; rxs = reverse xs in rxs ++ ys)
 	:: forall a . [a] -> [a] -> [a]
+
+revAddPat :: [a] -> [a] -> [a]
+revAddPat (xs :: [a]) ys = rxs ++ ys
+	where
+	rxs :: [a]
+	rxs = reverse xs

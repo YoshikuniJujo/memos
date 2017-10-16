@@ -220,13 +220,82 @@ revAddAnnot = (\xs ys -> let rxs :: [a]; rxs = reverse xs in rxs ++ ys)
 
 ### パターンでの型変数の導入
 
+型変数をスコープに導入するやりかたは、
+型宣言でforallを明示するという方法だけでなく、
+「パターンに対して型注釈をつける」というやりかたもある。
+つぎの例をみてみよう。
+
+```hs:revAdd.hs
+revAddPat :: [a] -> [a] -> [a]
+revAddPat (xs :: [a]) ys = rxs ++ ys
+        where
+        rxs :: [a]
+        rxs = reverse xs
+```
+
+同様に、対話環境で試しておこう。
+
 #### 存在型について
+
+パターンでの型変数の導入は、とくに、「存在型」を使うときに必要になる。
+つぎの例をみてみよう。
+ファイルexistential.hsを作成する。
+
+```hs:existential.hs
+{-# LANGUAGE ScopedTypeVariables, ExistentialQuantification #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+data T = forall a . MkT [a]
+
+k :: T -> T
+k (MkT [t :: a]) = MkT t3
+        where
+        t3 :: [a]
+        t3 = [t, t, t]
+k _ = undefined
+```
+
+存在型を使用したデータ型Tにおいて、そのなかみの型は、
+型宣言のなかに出てこない。
+よって、パターンでの型変数の導入が必須になる。
 
 型クラス宣言における型変数のスコープ
 ------------------------------------
 
+型クラス宣言では、その頭部で導入された型変数のスコープは、その宣言全体となる。
+これはScopedTypeVariables拡張のない場合と、おなじだ。
+つぎのような、ファイルrevAddClass.hsを作成する。
+
+```hs:revAddClass.hs
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+class RevAdd as where
+        revAdd :: as -> as -> as
+```
+
+型クラス宣言の頭部で導入された型変数aのスコープは、
+型クラス宣言の全体になる。
+
 インスタンス宣言における型変数のスコープ
 ----------------------------------------
+
+インスタンス宣言では、ScopedTypeVariables拡張が有効でない場合、
+宣言の頭部で導入された型変数のスコープは、頭部に限られる。
+ScopedTypeVariables拡張を有効にすることで、
+そのスコープをインスタンス宣言の全体に広げることができる。
+ファイルrevAddClass.hsに、つぎのようなインスタンス宣言を追加しよう。
+
+```hs:revAddClass.hs
+instance RevAdd [a] where
+        revAdd xs ys = rxs ++ ys
+                where
+                rxs :: [a]
+                rxs = reverse xs
+```
+
+頭部で導入された型変数aのスコープが、インスタンス宣言の全体におよぶので、
+where節でrxs :: [a]のように問題なく宣言することができる。
 
 まとめ
 ------
