@@ -153,8 +153,57 @@ x :: Sum (Product Char Bool) (Product String Integer)
 型構築演算子
 ------------
 
+さて、関数にたいして演算子があり、値構築子にたいして値構築演算子がある。
+それでは、型構築子にたいして型構築演算子は使えるだろうか。
+使える。そう、GHCならね。
+つぎのようにファイルproductSumTypeOp.hsを作成する。
+
+```hs:productSumTypeOp.hs
+{-# LANGUAGE TypeOperators #-}
+
+data a * b = a :*: b deriving Show
+data a + b = L a | R b deriving Show
+
+x :: (Char * Bool) + (String * Integer)
+x = L $ 'c' :*: True
+```
+
+演算子と型構築演算子とは、名前空間が異なるので、
+おなじ名前を使うことができる。
+対話環境で試してみよう。
+
+```hs
+> :load productSumTypeOp.hs
+> x
+L ('c' :*: True)
+> :type x
+x :: (Char * Bool) + (String * Integer)
+```
+
 型構築演算子の結合力
 --------------------
 
+型構築演算子の結合力を変えることもできる。
+つぎのように結合力の宣言を追加する。
+
+```hs:productSumTypeOp.hs
+infixl 7 *
+infixl 6 +
+```
+
+サンプルの値xの型宣言を書き直す。
+
+```hs:productSumTypeOp.hs
+x :: Char * Bool + String * Integer
+```
+
+ただし、演算子と型構築演算子の結合力をばらばらに設定することは、たぶん、
+できない。
+対話環境で試しておこう。
+
 まとめ
 ------
+
+関数にたいして演算子が、値構築子にたいして値構築演算子がある。
+GHCでは言語拡張TypeOperatorsを有効にすることで、
+型構築子にたいして型構築演算子を使うことができる。
