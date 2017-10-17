@@ -102,13 +102,53 @@ Right C
 また、代数的データ型も、そのままで直積と直和である。
 なので、ここで新たな「直積型」「直和型」を定義する理由はないが、
 説明の都合上、定義することとする。
+ファイルproductSum.hsを作成する。
 
 ```hs:productSum.hs
-(ここに直積型、直和型のコードを書く)
+data Product a b = Product a b deriving Show
+data Sum a b = L a | R b deriving Show
+
+x :: Sum (Product Char Bool) (Product String Integer)
+x = L $ Product 'c' True
+```
+
+試してみる。
+
+```hs
+> :load productSum.hs
+> x
+L (Product 'c' True)
+> :type x
+x :: Sum (Product Char Bool) (Product String Integer)
 ```
 
 値構築演算子
 ------------
+
+値構築演算子を使うと、直積型はより読みやすくなる。
+productSum.hsの、データ型Productの定義を修正する。
+
+```hs:productSum.hs
+data Product a b = a :*: b deriving Show
+```
+
+値構築演算子は、ふつうの演算子と名前空間がおなじなので、
+区別するために、その名前には:(コロン)から、はじまる識別子を使う。
+最後にも:(コロン)をつけたのは、そのほうが見た目のバランスがいいからで、
+とくに深い意味はない。
+サンプルの値xの定義も修正する。
+
+```hs:productSum.hs
+x = L $ 'c' :*: True
+```
+
+```hs
+> :reload
+> x
+L ('c' :*: True)
+> :type x
+x :: Sum (Product Char Bool) (Product String Integer)
+```
 
 型構築演算子
 ------------
