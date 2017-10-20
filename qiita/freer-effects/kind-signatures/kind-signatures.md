@@ -53,6 +53,26 @@ Freer Effectsが、だいたいわかった: 11-3 KindSignatures拡張
 	* 関数handleRelayなどを作成する
 	* NonDetについて、など
 
+値に型付けできる型と、できない型
+--------------------------------
+
+たとえば、型Boolや型Charは値を型付けできる。
+しかし、型Maybeは、そのままでは値を型付けできない。
+Maybe Charのように、型引数をひとつとる必要がある。
+型Eitherであれば、Either Bool Charのように、型引数をふたつとる必要がある。
+対話環境でみてみよう。
+
+```hs
+> False :: Bool
+False
+> 'c' :: Char
+'c'
+> Just 'c' :: Maybe Char
+Just 'c'
+> Left True :: Either Bool Char
+Left True
+```
+
 型の型(種類)
 ------------
 
@@ -68,3 +88,31 @@ Bool :: *
 ```
 
 値Falseの型はBoolで、型Boolの種類は\*だ。
+ここで、型Maybeの種類をみてみよう。
+
+```hs
+> :kind Maybe
+Maybe :: * -> *
+> :kind Bool
+Bool :: *
+> :kind Maybe Bool
+Maybe Bool :: *
+```
+
+たとえば、(Int -> Int)型の関数にInt型の値を引数としてあたえると、
+Int型の値に評価される。
+それとおなじように、(\* -> \*)種の型構築子に\*種の型をあたえると、
+\*種の型になる。
+型引数をふたつとる型Eitherについてもみてみよう。
+
+```hs
+> :kind Either
+Either :: * -> * -> *
+> :kind Either Bool
+Either Bool :: * -> *
+> :kind Either Bool Char
+Either Bool Char :: *
+```
+
+種推論
+------
