@@ -2,3 +2,9 @@
 
 ex1 :: (Integer, (Double, (Bool, ())))
 ex1 = (123, (3.14, (True, ())))
+
+car :: (a, b) -> a
+car = fst
+
+cdr :: (a, b) -> b
+cdr = snd
