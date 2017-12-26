@@ -28,13 +28,13 @@ instance Mulable Int Double where
 	n * x = round $ fromIntegral n Prelude.* x
 
 threeHello :: BS.ByteString
-threeHello = "hello" * (3 :: Int)
+threeHello = "Hello" * (3 :: Int)
 
 sevenHello :: BS.ByteString
-sevenHello = "hello" * (7 :: Integer)
+sevenHello = "Hello" * (7 :: Integer)
 
 threePointFourHello :: BS.ByteString
-threePointFourHello = "hello" * (3.4 :: Double)
+threePointFourHello = "Hello" * (3.4 :: Double)
 
 threeFive :: Int
 threeFive = 5 * (3 :: Int)

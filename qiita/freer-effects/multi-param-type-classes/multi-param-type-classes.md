@@ -54,3 +54,144 @@ Freer Effectsが、だいたいわかった: 11-4 DataKinds拡張
 16. いろいろなEffect
 	* 関数handleRelayなどを作成する
 	* NonDetについて、など
+
+はじめに
+--------
+
+プレーンなHaskellでは、型クラスのとれる引数は、ひとつである。
+言語拡張を使うことで、型クラスが複数の引数をとれるようにできる。
+
+Ruby的かけ算
+------------
+
+### 何がしたいか
+
+Rubyでは、文字列と数値とをかけあわせることができる。
+もちろん、数値と数値とをかけあわせることもできる。
+これを実現するために、かけ算の第1引数と第2引数とを、別の型にできるような、
+多相的なかけ算を定義してみよう。
+
+### コードと実行例
+
+つぎのような、ファイルmul.hsを作成する。
+
+```hs:mul.hs
+{-# LANGUAGE MultiParamTypeClasses, OverloadedStrings #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+import Prelude hiding ((*))
+import qualified Prelude
+import qualified Data.ByteString as BS
+
+class Mulable a b where
+        (*) :: a -> b -> a
+```
+
+かけ算の結果の値の型は、第1引数の型とおなじ型とする。
+「文字列 * 整数」についてインスタンスを定義する。
+
+```hs:mul.hs
+instance Mulable BS.ByteString Int where
+        bs * n = BS.concat $ replicate n bs
+
+instance Mulable BS.ByteString Integer where
+        bs * n = BS.concat $ replicate (fromInteger n) bs
+```
+
+計算例を定義する。
+
+```hs:mul.hs
+threeHello :: BS.ByteString
+threeHello = "Hello" * (3 :: Int)
+
+sevenHello :: BS.ByteString
+sevenHello = "Hello" * (7 :: Int)
+```
+
+対話環境でみてみよう。
+
+```hs
+> :load mul.hs
+> threeHello
+"HelloHelloHello"
+> sevenHello
+"HelloHelloHelloHelloHelloHelloHello"
+```
+
+「Int型の値 * 整数」についてインスタンス定義する。
+
+```hs:mul.hs
+instance Mulable Int Int where
+        n * m = n Prelude.* m
+
+instance Mulable Int Integer where
+        n * m = n Prelude.* fromInteger m
+```
+
+計算例を定義する。
+
+```hs:mul.hs
+threeFive :: Int
+threeFive = 5 * (3 :: Int)
+
+sevenFive :: Int
+sevenFive = 5 * (7 :: Integer)
+```
+
+対話環境でみてみる。
+
+```hs
+> :reload
+> threeFive
+15
+> sevenFive
+35
+```
+
+もりあがってきたので、
+「文字列 * 浮動小数点数」や「Int型の値 * 浮動小数点数」も定義する。
+
+```hs:mul.hs
+instance Mulable BS.ByteString Double where
+        bs * x = BS.take l . BS.concat $ replicate (ceiling x) bs
+	        where l = round $ fromIntegral (BS.length bs) prelude.* x
+
+instance Mulable Int Double where
+        n * x = round $ fromIntegral n Prelude.* x
+
+threePointFourHello :: BS.ByteString
+threePointFourHello = "Hello" * (3.4 :: Double)
+
+threePointFourFive :: Int
+threePointFourFive = 5 * (3.4 :: Double)
+```
+
+試してみよう。
+
+```hs
+> :reload
+> threePointFourHello
+"HelloHelloHelloHe"
+> threePointFourFive
+17
+```
+
+### 設計のまずさ
+
+わかりやすい例として挙げたけれど、上のような設計をするのは、
+あまりかしこいとは言えない。
+かけ算の第1引数となる型の数nと、第2引数となる型の数mに対して、
+n * m個のインスタンス宣言が必要になる。
+
+かしこい設計は、おそらく、「いちど共通の型に変換して云々」といったところか。
+プログラミングの名著中の名著である
+SICP(Structure and Interpretation of Computer Programs)
+あたりで触れられていたように思う。
+
+まとめ
+------
+
+MultiParamTypeClasses拡張を使うと、
+型クラスが複数の引数をとることができるようになる。
+わかりやすい例として「Rubyっぽいかけ算」の例を挙げた。
+この例は「わかりやすい」けれど、「かしこくない設計」ではある。
