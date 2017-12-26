@@ -14,14 +14,18 @@ instance Mulable BS.ByteString Int where
 instance Mulable BS.ByteString Integer where
 	bs * n = BS.concat $ replicate (fromInteger n) bs
 
+instance Mulable BS.ByteString Double where
+	bs * x = BS.take l . BS.concat $ replicate (ceiling x) bs
+		where l = round $ fromIntegral (BS.length bs) Prelude.* x
+
 instance Mulable Int Int where
 	n * m = n Prelude.* m
 
 instance Mulable Int Integer where
 	n * m = n Prelude.* fromInteger m
 
-instance Mulable Double Int where
-	x * n = x Prelude.* fromIntegral n
+instance Mulable Int Double where
+	n * x = round $ fromIntegral n Prelude.* x
 
 threeHello :: BS.ByteString
 threeHello = "hello" * (3 :: Int)
@@ -29,8 +33,14 @@ threeHello = "hello" * (3 :: Int)
 sevenHello :: BS.ByteString
 sevenHello = "hello" * (7 :: Integer)
 
+threePointFourHello :: BS.ByteString
+threePointFourHello = "hello" * (3.4 :: Double)
+
 threeFive :: Int
 threeFive = 5 * (3 :: Int)
 
 sevenFive :: Int
 sevenFive = 5 * (7 :: Integer)
+
+threePointFourFive :: Int
+threePointFourFive = 5 * (3.4 :: Double)
