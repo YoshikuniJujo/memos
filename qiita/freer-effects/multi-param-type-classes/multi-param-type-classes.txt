@@ -4,44 +4,44 @@ Freer Effectsが、だいたいわかった: 11-5 MultiParamTypeClasses拡張
 目次
 ----
 
-0. [導入](../prelude.md)
+0. [導入](https://qiita.com/YoshikuniJujo/items/c71644b5af1f5195cbf3)
 
-1. [Freeモナドの概要](../free-monad/free-monad.md)
+1. [Freeモナドの概要](https://qiita.com/YoshikuniJujo/items/988ac4b69a27974154fd)
 	* Freeモナドとは
 	* FreeモナドでReaderモナド、Writerモナドを構成する
 2. [存在型(ExistentialQuantification拡張)の解説](
-	../existential-quantification/existentials.md )
-3. [型シノニム族(TypeFamilies拡張)の解説](./type-synonym-family.md)
-4. [データ族(TypeFamilies拡張)の解説](../type-families/data-family.md)
-5. [一般化代数データ型(GADTs拡張)の解説](../gadts/gadts.md)
-6. [ランクN多相(RankNTypes拡張)の解説](../rank-n-types/rank-n-types.md)
-7. [FreeモナドとCoyoneda](../free-coyoneda/free_coyoneda.md)
+	https://qiita.com/YoshikuniJujo/items/988ac4b69a27974154fd )
+3. [型シノニム族(TypeFamilies拡張)の解説](https://qiita.com/YoshikuniJujo/items/17853e423c39409d8dfe)
+4. [データ族(TypeFamilies拡張)の解説](https://qiita.com/YoshikuniJujo/items/b3c442d0387a35bfe860)
+5. [一般化代数データ型(GADTs拡張)の解説](https://qiita.com/YoshikuniJujo/items/739a1e3abed8c602dba7)
+6. [ランクN多相(RankNTypes拡張)の解説](https://qiita.com/YoshikuniJujo/items/4094b5fe5a7a33f3d1e6)
+7. [FreeモナドとCoyoneda](https://qiita.com/YoshikuniJujo/items/729ad9830833eacb9d75)
 	* Coyonedaを使ってみる
 	* FreeモナドとCoyonedaを組み合わせる
 		+ いろいろなモナドを構成する
 8. [Freerモナド(Operationalモナド)でいろいろなモナドを構成する](
-	../freer-monad/freer-monad.md )
+	https://qiita.com/YoshikuniJujo/items/686fedc92fd20ff70ab8 )
 	* FreeモナドとCoyonedaをまとめて、Freerモナドとする
 	* Readerモナド
 	* Writerモナド
 	* 状態モナド
 	* エラーモナド
 9. [モナドを混ぜ合わせる(閉じた型で)](
-	../closed-mix/closed-mix.md )
+	https://qiita.com/YoshikuniJujo/items/19a6e9dada698a5ebfb6 )
 	* Freerモナドで、状態モナドとエラーモナドを混ぜ合わせる
 		+ 両方のモナドを一度に処理する
 		+ それぞれのモナドを、それぞれに処理する
 10. [存在型による拡張可能なデータ構造(Open Union)](
-	../open-union/open-union.md )
+	https://qiita.com/YoshikuniJujo/items/8dd63c9415ccda20be28 )
 11. 追加の言語拡張
 	1. [ScopedTypeVariables拡張](
-		../scoped-type-variables/scoped-type-variables.md )
+		https://qiita.com/YoshikuniJujo/items/103807ee6692e8c2c48b )
 	2. [TypeOperators拡張](
-		../type-operators/type-operators.md )
+		https://qiita.com/YoshikuniJujo/items/68af70347e61849ccea9 )
 	3. [KindSignatures拡張](
-		../kind-signatures/kind-signatures.md )
+		https://qiita.com/YoshikuniJujo/items/0f581acc78d2ba8e3a7c )
 	4. [DataKinds拡張](
-		../data-kinds/data-kinds.md )
+		https://qiita.com/YoshikuniJujo/items/c06c01f9a2d344ac211f )
 	5. MultiParamTypeClasses拡張
 	6. FlexibleInstances拡張
 	7. OVERLAPSプラグマ
@@ -58,18 +58,14 @@ Freer Effectsが、だいたいわかった: 11-5 MultiParamTypeClasses拡張
 はじめに
 --------
 
-プレーンなHaskellでは、型クラスのとれる引数は、ひとつである。
-言語拡張を使うことで、型クラスが複数の引数をとれるようにできる。
+プレーンなHaskellでは、型クラスのとれる引数は、ひとつである。言語拡張を使うことで、型クラスが複数の引数をとれるようにできる。
 
 Ruby的かけ算
 ------------
 
 ### 何がしたいか
 
-Rubyでは、文字列と数値とをかけあわせることができる。
-もちろん、数値と数値とをかけあわせることもできる。
-これを実現するために、かけ算の第1引数と第2引数とを、別の型にできるような、
-多相的なかけ算を定義してみよう。
+Rubyでは、文字列と数値とをかけあわせることができる。もちろん、数値と数値とをかけあわせることもできる。これを実現するために、かけ算の第1引数と第2引数とを、別の型にできるような、多相的なかけ算を定義してみよう。
 
 ### コードと実行例
 
@@ -87,8 +83,7 @@ class Mulable a b where
         (*) :: a -> b -> a
 ```
 
-かけ算の結果の値の型は、第1引数の型とおなじ型とする。
-「文字列 * 整数」についてインスタンスを定義する。
+かけ算の結果の値の型は、第1引数の型とおなじ型とする。「文字列 * 整数」についてインスタンスを定義する。
 
 ```hs:mul.hs
 instance Mulable BS.ByteString Int where
@@ -148,8 +143,7 @@ sevenFive = 5 * (7 :: Integer)
 35
 ```
 
-もりあがってきたので、
-「文字列 * 浮動小数点数」や「Int型の値 * 浮動小数点数」も定義する。
+もりあがってきたので、「文字列 * 浮動小数点数」や「Int型の値 * 浮動小数点数」も定義する。
 
 ```hs:mul.hs
 instance Mulable BS.ByteString Double where
@@ -178,20 +172,11 @@ threePointFourFive = 5 * (3.4 :: Double)
 
 ### 設計のまずさ
 
-わかりやすい例として挙げたけれど、上のような設計をするのは、
-あまりかしこいとは言えない。
-かけ算の第1引数となる型の数nと、第2引数となる型の数mに対して、
-n * m個のインスタンス宣言が必要になる。
+わかりやすい例として挙げたけれど、上のような設計をするのは、あまりかしこいとは言えない。かけ算の第1引数となる型の数nと、第2引数となる型の数mに対して、n * m個のインスタンス宣言が必要になる。
 
-かしこい設計は、おそらく、「いちど共通の型に変換して云々」といったところか。
-プログラミングの名著中の名著である
-SICP(Structure and Interpretation of Computer Programs)
-あたりで触れられていたように思う。
+かしこい設計は、おそらく、「いちど共通の型に変換して云々」といったところか。プログラミングの名著中の名著であるSICP(Structure and Interpretation of Computer Programs)あたりで触れられていたように思う。
 
 まとめ
 ------
 
-MultiParamTypeClasses拡張を使うと、
-型クラスが複数の引数をとることができるようになる。
-わかりやすい例として「Rubyっぽいかけ算」の例を挙げた。
-この例は「わかりやすい」けれど、「かしこくない設計」ではある。
+MultiParamTypeClasses拡張を使うと、型クラスが複数の引数をとることができるようになる。わかりやすい例として「Rubyっぽいかけ算」の例を挙げた。この例は「わかりやすい」けれど、「かしこくない設計」ではある。
