@@ -45,8 +45,8 @@ Freer Effectsが、だいたいわかった: 11-6 FlexibleInstances拡張
 	5. [MultiParamTypeClasses拡張](
 		../multi-param-type-classes.md )
 	6. FlexibleInstances拡張
-	7. FlexibleContexts拡張
-	8. OVERLAPSプラグマ
+	7. OVERLAPSプラグマ
+	8. FlexibleContexts拡張
 	9. LambdaCase拡張
 12. Open Unionを型によって安全にする
 13. モナドを混ぜ合わせる(開いた型で)
