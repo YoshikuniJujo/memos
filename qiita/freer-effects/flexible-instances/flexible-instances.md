@@ -43,7 +43,7 @@ Freer Effectsが、だいたいわかった: 11-6 FlexibleInstances拡張
 	4. [DataKinds拡張](
 		../data-kinds/data-kinds.md )
 	5. [MultiParamTypeClasses拡張](
-		../multi-param-type-classes.md )
+		../multi-param-type-classes/multi-param-type-classes.md )
 	6. FlexibleInstances拡張
 	7. OVERLAPSプラグマ
 	8. FlexibleContexts拡張
