@@ -107,6 +107,46 @@ instance Foo [Integer] where
 
 ### 交わるが、たがいに部分集合にならない例
 
+どちらも、たがいの部分集合にならない例。
+
+```hs:rejectIncoherent.hs
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+class Foo a b where
+        f :: a -> b -> String
+
+instance Foo Integer b where
+        f _ _ = "instance Foo Integer b where"
+
+instance Foo a Char where
+        f _ _ = "instance Foo a Char where"
+```
+
+対話環境で試してみよう。
+
+```hs
+> :load rejectIncoherent.hs
+> f 123 False
+"instance Foo Integer b where"
+> f "hello" 'c'
+"instance Foo a Char where"
+> f 123 'c'
+
+<interactive>:4:1: error:
+    ・ Overlapping instances for Foo Integer Char
+         arising from a use of `f'
+       Matching instances:
+         instance [safe] Foo a Char
+           -- Defined at ...
+         instance [safe] Foo Integer b
+           -- Defined at ...
+    ・ In the expression: f 123 'c'
+       In an equation for `it': it = f 123 'c'
+```
+
+こちらも、候補になるインスタンス宣言が複数あるため、エラーとなる。
+
 言語拡張
 --------
 
