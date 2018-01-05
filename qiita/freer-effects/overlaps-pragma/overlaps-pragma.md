@@ -150,7 +150,91 @@ instance Foo a Char where
 言語拡張
 --------
 
+インスタンス宣言において、重なり合う部分を使用することはできない。
+これを可能にするのが、OverlappingInstances拡張やIncoherentInstances拡張だ。
+これらの言語拡張は現在では非推奨になっている。
+言語拡張ではなく、後で紹介するプラグマを使うことで、
+インスタンス宣言の重複について、より細かく指定できる。
+
 ### OverlappingInstances拡張
+
+#### ひとつめの例
+
+上記のひとつめの例はOverlappingInstances拡張によって、
+エラーではなくなる。
+
+```hs:overlapingInstances.hs
+{-# LANGUAGE FlexibleInstances, OverlappingInstances #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+class Foo a where
+        f :: a -> String
+
+instance Foo [a] where
+        f _ = "instance Foo [a] where"
+
+instance Foo [Integer] where
+        f _ = "instance Foo [Integer] where"
+```
+
+試してみよう。
+
+```hs
+> :load overlappingInstances.hs
+> f ['a', 'b', 'c']
+"instance Foo [a] where"
+> f [3, 4, 5]
+"instance Foo [Integer] where"
+```
+
+より特定的な(つまり、部分集合となっているほうの)インスタンス宣言が使われる。
+
+#### ふたつめの例
+
+ふたつめの例についても、みてみよう。
+
+```hs:overlappingInstances2.hs
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, OverlappingInstances #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+class Foo a b where
+        f :: a -> b -> String
+
+instance Foo Integer b where
+        f _ _ = "instance Foo Integer b where"
+
+instance Foo a Char where
+        f _ _ = "instance Foo a Char where"
+```
+
+試してみる。
+
+```hs
+> :load overlappingInstances2.hs
+> f 123 False
+"instance Foo Integer b where"
+> f "hello" 'c'
+"instance Foo a Char where"
+> f 123 'c'
+
+<interactive>:4:1: error:
+    ・ Overlapping instances for Foo Integer Char
+         arising from a use of `f'
+       Matching instances:
+         instance [overlap ok] [safe] Foo a Char
+           -- Defined at overlappingInstances2.hs:10:10
+         instance [overlap ok] [safe] Foo Integer b
+           -- Defined at overlappingInstances2.hs:7:10
+    ・ In the expression: f 123 'c'
+       In an equation for `it': it = f 123 'c'
+```
+
+OverlappingInstances拡張では、
+一方が他方の真の部分集合だったときだけ、
+より特定的なほうのインスタンス宣言が、
+それを含むインスタンス宣言を上書きするように解釈される。
+この例のように、たがいに相手の部分集合にならないような場合には、
+重なる部分については、エラーになる。
 
 ### IncoherentInstances拡張
 
