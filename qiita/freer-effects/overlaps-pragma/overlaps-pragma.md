@@ -89,7 +89,7 @@ instance Foo [Integer] where
 > :load rejectOverlaps.hs
 > f ['a', 'b', 'c']
 "instance Foo [a] where"
-> f [3, 4, 5]
+> f [3 :: Integer, 4, 5]
 
 <interactive>:3:1: error:
     ・ Overlapping instances for Foo [Integer] arising from a use of 'f'
@@ -98,7 +98,7 @@ instance Foo [Integer] where
           -- Defined at ...
         instance [safe] Foo [a]
           -- Defined at ...
-    ・ In the expression: f [3, 4, 5]
+    ・ In the expression: f [3 :: Integer, 4, 5]
        In an equation for `it': it = f [3, 4, 5]
 ```
 
@@ -127,11 +127,11 @@ instance Foo a Char where
 
 ```hs
 > :load rejectIncoherent.hs
-> f 123 False
+> f (123 :: Integer) False
 "instance Foo Integer b where"
 > f "hello" 'c'
 "instance Foo a Char where"
-> f 123 'c'
+> f (123 :: Integer) 'c'
 
 <interactive>:4:1: error:
     ・ Overlapping instances for Foo Integer Char
@@ -141,8 +141,8 @@ instance Foo a Char where
            -- Defined at ...
          instance [safe] Foo Integer b
            -- Defined at ...
-    ・ In the expression: f 123 'c'
-       In an equation for `it': it = f 123 'c'
+    ・ In the expression: f (123 :: Integer) 'c'
+       In an equation for `it': it = f (123 :: Integer) 'c'
 ```
 
 こちらも、候補になるインスタンス宣言が複数あるため、エラーとなる。
@@ -183,7 +183,7 @@ instance Foo [Integer] where
 > :load overlappingInstances.hs
 > f ['a', 'b', 'c']
 "instance Foo [a] where"
-> f [3, 4, 5]
+> f [3 :: Integer, 4, 5]
 "instance Foo [Integer] where"
 ```
 
@@ -211,11 +211,11 @@ instance Foo a Char where
 
 ```hs
 > :load overlappingInstances2.hs
-> f 123 False
+> f (123 :: Integer) False
 "instance Foo Integer b where"
 > f "hello" 'c'
 "instance Foo a Char where"
-> f 123 'c'
+> f (123 :: Integer) 'c'
 
 <interactive>:4:1: error:
     ・ Overlapping instances for Foo Integer Char
@@ -225,8 +225,8 @@ instance Foo a Char where
            -- Defined at overlappingInstances2.hs:10:10
          instance [overlap ok] [safe] Foo Integer b
            -- Defined at overlappingInstances2.hs:7:10
-    ・ In the expression: f 123 'c'
-       In an equation for `it': it = f 123 'c'
+    ・ In the expression: f (123 :: Integer) 'c'
+       In an equation for `it': it = f (123 :: Integer) 'c'
 ```
 
 OverlappingInstances拡張では、
@@ -237,6 +237,26 @@ OverlappingInstances拡張では、
 重なる部分については、エラーになる。
 
 ### IncoherentInstances拡張
+
+#### ひとつめの例
+
+言語拡張のOverlappingInstancesのところをIncoherentInstances拡張に変える。
+
+```hs:incoherentInstances.hs
+{-# LANGUAGE FlexibleInstances, IncoherentInstances #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+class Foo a where
+        f :: a -> String
+
+instance Foo [a] where
+        f _ = "instance Foo [a] where"
+
+instance Foo [Integer] where
+        f _ = "instance Foo [Integer] where"
+```
+
+#### ふたつめの例
 
 ### 言語拡張での問題点
 
