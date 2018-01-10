@@ -256,17 +256,129 @@ instance Foo [Integer] where
         f _ = "instance Foo [Integer] where"
 ```
 
+```hs
+> :load incoherentInstances.hs
+> f ['a', 'b', 'c']
+"instance Foo [a] where"
+> f [3 :: Integer, 4, 5]
+"instance Foo [Integer] where"
+```
+
+IncoherentInstances拡張はOverlappingInstancesよりも、
+制限がゆるいので、ひとつめの例もエラーにならない。
+
 #### ふたつめの例
 
+ふたつめの例についても言語拡張のOverlappingInstancesのところを
+IncoherentInstancesに変える。
+
+```hs:IncoherentInstances2.hs
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, IncoherentInstances #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+class Foo a b where
+        f :: a -> b -> String
+
+instance Foo Integer b where
+        f _ _ = "instance Foo Integer b where"
+
+instance Foo a Char where
+        f _ _ = "instance Foo a Char where"
+```
+
+試してみよう。
+
+```hs
+> :load incoherentInstances2.hs
+> f (123 :: Integer) False
+> f "hello" 'c'
+"instance Foo a Char where"
+> f (123 :: Integer) 'c'
+"instance Foo Integer b where"
+```
+
+IncoherentInstances拡張下では、たがいに部分集合にならないような、
+インスタンス宣言においては、任意の(どれが選ばれるかはわからない)ひとつが
+選ばれる。
+現在の実装では定義されている順に依存するようだ。
+インスタンス宣言の定義順を変えて、各自、試してみよう。
+
 ### 言語拡張での問題点
+
+このような、言語拡張によりインスタンス宣言の重複を許可するやりかたは、
+現在では推奨されていない。
+どのインスタンス宣言が上書きを許し、
+どのインスタンス宣言が上書きを許さないかを、個別に決められるほうが、ずっといい。
+
+対話環境でインスタンス宣言について、くわしくみてみよう。
+
+```hs
+> :load incoherentInstances2.hs
+> :info Foo
+class Foo a b where
+  ...
+instance [incoherent] [safe] Foo a Char
+  -- Defined at ...
+instance [incoherent] [safe] Foo Integer b
+  -- Defined at ...
+> :load overloadedInstances.hs
+> :info Foo
+class Foo a where
+  ...
+instance [overlap ok] [safe] Foo [Integer]
+  -- Defined at ...
+instance [overlap ok] [safe] Foo [a]
+  -- Defined at ...
+```
+
+インスタンス宣言について「重複可能かどうか」という性質は、
+内部的には、それぞれのインスタンス宣言ごとに個別に設定されている。
+しかし、言語拡張での指定では、それらをモジュール単位でしか指定できない。
 
 プラグマ
 --------
 
+インスタンス宣言は重複について、3つの性質がある。
+
+* より特定的な(そのインスタンス宣言の真の部分集合になる)インスタンス宣言によって、
+	上書きされることを許す
+* 自身がより特定的である(相手のインスタンス宣言の真の部分集合になる)
+	インスタンス宣言を上書きすることができる
+* たがいに部分集合とはならないような重複を許す
+	+ 重複したときには、「重複を許さないインスタンス宣言」が優先される
+
+それぞれの性質をここでは、それぞれ、つぎのような呼ぶ。
+
+* overlappableである
+* overlappingである
+* incoherentである
+
+### プラグマの指定のしかた
+
+これらのプラグマの指定のしかたを示む。
+指定するプラグマをHOGEとおくと、つぎのようになる。
+
+```hs
+instance {-# HOGE #-} context => C a b ... where
+```
+
 ### OVERLAPPABLEプラグマ
+
+OVERLAPPABLEプラグマを指定されたインスタンス宣言はoverlappableである。
 
 ### OVERLAPPINGプラグマ
 
+OVERLAPPINGプラグマを指定されたインスタンス宣言はoverlappingである。
+
 ### OVERLAPSプラグマ
 
+OVERLAPSプラグマを指定されたインスタンス宣言はoverlappableであり、
+かつoverlappingである。
+
 ### INCOHERENTプラグマ
+
+INCOHERENTプラグマを指定されたインスタンス宣言はoverlappableであり、
+overlappingであり、かつincoherentである。
+
+インスタンス宣言の選ばれかた
+----------------------------
