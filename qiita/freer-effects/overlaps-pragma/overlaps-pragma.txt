@@ -1,0 +1,402 @@
+Freer Effectsが、だいたいわかった: 11-7 OVERLAPSプラグマ
+========================================================
+
+目次
+----
+
+0. [導入](https://qiita.com/YoshikuniJujo/items/c71644b5af1f5195cbf3)
+
+1. [Freeモナドの概要](https://qiita.com/YoshikuniJujo/items/988ac4b69a27974154fd)
+	* Freeモナドとは
+	* FreeモナドでReaderモナド、Writerモナドを構成する
+2. [存在型(ExistentialQuantification拡張)の解説](
+	https://qiita.com/YoshikuniJujo/items/988ac4b69a27974154fd )
+3. [型シノニム族(TypeFamilies拡張)の解説](https://qiita.com/YoshikuniJujo/items/17853e423c39409d8dfe)
+4. [データ族(TypeFamilies拡張)の解説](https://qiita.com/YoshikuniJujo/items/b3c442d0387a35bfe860)
+5. [一般化代数データ型(GADTs拡張)の解説](https://qiita.com/YoshikuniJujo/items/739a1e3abed8c602dba7)
+6. [ランクN多相(RankNTypes拡張)の解説](https://qiita.com/YoshikuniJujo/items/4094b5fe5a7a33f3d1e6)
+7. [FreeモナドとCoyoneda](https://qiita.com/YoshikuniJujo/items/729ad9830833eacb9d75)
+	* Coyonedaを使ってみる
+	* FreeモナドとCoyonedaを組み合わせる
+		+ いろいろなモナドを構成する
+8. [Freerモナド(Operationalモナド)でいろいろなモナドを構成する](
+	https://qiita.com/YoshikuniJujo/items/686fedc92fd20ff70ab8 )
+	* FreeモナドとCoyonedaをまとめて、Freerモナドとする
+	* Readerモナド
+	* Writerモナド
+	* 状態モナド
+	* エラーモナド
+9. [モナドを混ぜ合わせる(閉じた型で)](
+	https://qiita.com/YoshikuniJujo/items/19a6e9dada698a5ebfb6 )
+	* Freerモナドで、状態モナドとエラーモナドを混ぜ合わせる
+		+ 両方のモナドを一度に処理する
+		+ それぞれのモナドを、それぞれに処理する
+10. [存在型による拡張可能なデータ構造(Open Union)](
+	https://qiita.com/YoshikuniJujo/items/8dd63c9415ccda20be28 )
+11. 追加の言語拡張
+	1. [ScopedTypeVariables拡張](
+		https://qiita.com/YoshikuniJujo/items/103807ee6692e8c2c48b )
+	2. [TypeOperators拡張](
+		https://qiita.com/YoshikuniJujo/items/68af70347e61849ccea9 )
+	3. [KindSignatures拡張](
+		https://qiita.com/YoshikuniJujo/items/0f581acc78d2ba8e3a7c )
+	4. [DataKinds拡張](
+		https://qiita.com/YoshikuniJujo/items/c06c01f9a2d344ac211f )
+	5. [MultiParamTypeClasses拡張](
+		https://qiita.com/YoshikuniJujo/items/165460f39f1cae751300 )
+	6. [FlexibleInstances拡張] (
+		https://qiita.com/YoshikuniJujo/items/eb70e7978f333ef3b514 )
+	7. OVERLAPSプラグマ
+	8. FlexibleContexts拡張
+	9. LambdaCase拡張
+12. Open Unionを型によって安全にする
+13. モナドを混ぜ合わせる(開いた型で)
+	* FreeモナドとOpen Unionを組み合わせる
+	* 状態モナドにエラーモナドを追加する
+14. Freer Effectsで、IOモナドなどの、既存のモナドを使用する
+15. 関数を保管しておくデータ構造による効率化
+16. いろいろなEffect
+	* 関数handleRelayなどを作成する
+	* NonDetについて、など
+
+重複するインスタンス宣言
+------------------------
+
+### 一方が他方の、真部分集合になる例
+
+ふたつのインスタンス宣言について、一方が、もう他方を含むような場合について考える
+(ただし、両者がおなじ範囲ではない)。たとえば、つぎのような例だ。
+
+```hs:rejectOverlaps.hs
+{-# LANGUAGE FlexibleInstances #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+class Foo a where
+        f :: a -> String
+
+instance Foo [a] where
+        f _ = "instance Foo [a] where"
+
+instance Foo [Integer] where
+        f _ = "instance Foo [Integer] where"
+```
+
+試してみよう。
+
+```hs
+> :load rejectOverlaps.hs
+> f ['a', 'b', 'c']
+"instance Foo [a] where"
+> f [3 :: Integer, 4, 5]
+
+<interactive>:3:1: error:
+    ・ Overlapping instances for Foo [Integer] arising from a use of 'f'
+      Mathcing instances:
+        instance [safe] Foo [Integer]
+          -- Defined at ...
+        instance [safe] Foo [a]
+          -- Defined at ...
+    ・ In the expression: f [3 :: Integer, 4, 5]
+       In an equation for `it': it = f [3, 4, 5]
+```
+
+適用する関数を選ぶときに、候補になるインスタンス宣言が複数あるため、エラーになる。
+
+### 交わるが、たがいに部分集合にならない例
+
+どちらも、たがいの部分集合にならない例。
+
+```hs:rejectIncoherent.hs
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+class Foo a b where
+        f :: a -> b -> String
+
+instance Foo Integer b where
+        f _ _ = "instance Foo Integer b where"
+
+instance Foo a Char where
+        f _ _ = "instance Foo a Char where"
+```
+
+対話環境で試してみよう。
+
+```hs
+> :load rejectIncoherent.hs
+> f (123 :: Integer) False
+"instance Foo Integer b where"
+> f "hello" 'c'
+"instance Foo a Char where"
+> f (123 :: Integer) 'c'
+
+<interactive>:4:1: error:
+    ・ Overlapping instances for Foo Integer Char
+         arising from a use of `f'
+       Matching instances:
+         instance [safe] Foo a Char
+           -- Defined at ...
+         instance [safe] Foo Integer b
+           -- Defined at ...
+    ・ In the expression: f (123 :: Integer) 'c'
+       In an equation for `it': it = f (123 :: Integer) 'c'
+```
+
+こちらも、候補になるインスタンス宣言が複数あるため、エラーとなる。
+
+言語拡張
+--------
+
+インスタンス宣言において、重なり合う部分を使用することはできない。これを可能にするのが、OverlappingInstances拡張やIncoherentInstances拡張だ。これらの言語拡張は現在では非推奨になっている。言語拡張ではなく、後で紹介するプラグマを使うことで、インスタンス宣言の重複について、より細かく指定できる。
+
+### OverlappingInstances拡張
+
+#### ひとつめの例
+
+上記のひとつめの例はOverlappingInstances拡張によって、エラーではなくなる。
+
+```hs:overlapingInstances.hs
+{-# LANGUAGE FlexibleInstances, OverlappingInstances #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+class Foo a where
+        f :: a -> String
+
+instance Foo [a] where
+        f _ = "instance Foo [a] where"
+
+instance Foo [Integer] where
+        f _ = "instance Foo [Integer] where"
+```
+
+試してみよう。
+
+```hs
+> :load overlappingInstances.hs
+> f ['a', 'b', 'c']
+"instance Foo [a] where"
+> f [3 :: Integer, 4, 5]
+"instance Foo [Integer] where"
+```
+
+より特定的な(つまり、部分集合となっているほうの)インスタンス宣言が使われる。
+
+#### ふたつめの例
+
+ふたつめの例についても、みてみよう。
+
+```hs:overlappingInstances2.hs
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, OverlappingInstances #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+class Foo a b where
+        f :: a -> b -> String
+
+instance Foo Integer b where
+        f _ _ = "instance Foo Integer b where"
+
+instance Foo a Char where
+        f _ _ = "instance Foo a Char where"
+```
+
+試してみる。
+
+```hs
+> :load overlappingInstances2.hs
+> f (123 :: Integer) False
+"instance Foo Integer b where"
+> f "hello" 'c'
+"instance Foo a Char where"
+> f (123 :: Integer) 'c'
+
+<interactive>:4:1: error:
+    ・ Overlapping instances for Foo Integer Char
+         arising from a use of `f'
+       Matching instances:
+         instance [overlap ok] [safe] Foo a Char
+           -- Defined at overlappingInstances2.hs:10:10
+         instance [overlap ok] [safe] Foo Integer b
+           -- Defined at overlappingInstances2.hs:7:10
+    ・ In the expression: f (123 :: Integer) 'c'
+       In an equation for `it': it = f (123 :: Integer) 'c'
+```
+
+OverlappingInstances拡張では、一方が他方の真の部分集合だったときだけ、より特定的なほうのインスタンス宣言が、それを含むインスタンス宣言を上書きするように解釈される。この例のように、たがいに相手の部分集合にならないような場合には、重なる部分については、エラーになる。
+
+### IncoherentInstances拡張
+
+#### ひとつめの例
+
+言語拡張のOverlappingInstancesのところをIncoherentInstances拡張に変える。
+
+```hs:incoherentInstances.hs
+{-# LANGUAGE FlexibleInstances, IncoherentInstances #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+class Foo a where
+        f :: a -> String
+
+instance Foo [a] where
+        f _ = "instance Foo [a] where"
+
+instance Foo [Integer] where
+        f _ = "instance Foo [Integer] where"
+```
+
+```hs
+> :load incoherentInstances.hs
+> f ['a', 'b', 'c']
+"instance Foo [a] where"
+> f [3 :: Integer, 4, 5]
+"instance Foo [Integer] where"
+```
+
+IncoherentInstances拡張はOverlappingInstancesよりも、制限がゆるいので、ひとつめの例もエラーにならない。
+
+#### ふたつめの例
+
+ふたつめの例についても言語拡張のOverlappingInstancesのところをIncoherentInstancesに変える。
+
+```hs:IncoherentInstances2.hs
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, IncoherentInstances #-}
+{-# OPTIONS_GHC -Wall -fno-warn-tabs #-}
+
+class Foo a b where
+        f :: a -> b -> String
+
+instance Foo Integer b where
+        f _ _ = "instance Foo Integer b where"
+
+instance Foo a Char where
+        f _ _ = "instance Foo a Char where"
+```
+
+試してみよう。
+
+```hs
+> :load incoherentInstances2.hs
+> f (123 :: Integer) False
+> f "hello" 'c'
+"instance Foo a Char where"
+> f (123 :: Integer) 'c'
+"instance Foo Integer b where"
+```
+
+IncoherentInstances拡張下では、たがいに部分集合にならないような、インスタンス宣言においては、任意の(どれが選ばれるかはわからない)ひとつが選ばれる。現在の実装では定義されている順に依存するようだ。インスタンス宣言の定義順を変えて、各自、試してみよう。
+
+### 言語拡張での問題点
+
+このような、言語拡張によりインスタンス宣言の重複を許可するやりかたは、現在では推奨されていない。どのインスタンス宣言が上書きを許し、どのインスタンス宣言が上書きを許さないかを、個別に決められるほうが、ずっといい。
+
+対話環境でインスタンス宣言について、くわしくみてみよう。
+
+```hs
+> :load incoherentInstances2.hs
+> :info Foo
+class Foo a b where
+  ...
+instance [incoherent] [safe] Foo a Char
+  -- Defined at ...
+instance [incoherent] [safe] Foo Integer b
+  -- Defined at ...
+> :load overloadedInstances.hs
+> :info Foo
+class Foo a where
+  ...
+instance [overlap ok] [safe] Foo [Integer]
+  -- Defined at ...
+instance [overlap ok] [safe] Foo [a]
+  -- Defined at ...
+```
+
+インスタンス宣言について「重複可能かどうか」という性質は、内部的には、それぞれのインスタンス宣言ごとに個別に設定されている。しかし、言語拡張での指定では、それらをモジュール単位でしか指定できない。
+
+プラグマ
+--------
+
+インスタンス宣言は重複について、3つの性質がある。
+
+* より特定的な(そのインスタンス宣言の真の部分集合になる)インスタンス宣言によって、
+	上書きされることを許す
+* 自身がより特定的である(相手のインスタンス宣言の真の部分集合になる)
+	インスタンス宣言を上書きすることができる
+* たがいに部分集合とはならないような重複を許す
+	+ 重複したときには、「重複を許さないインスタンス宣言」が優先される
+
+それぞれの性質をここでは、それぞれ、つぎのような呼ぶ。
+
+* overlappableである
+* overlappingである
+* incoherentである
+
+### プラグマの指定のしかた
+
+これらのプラグマの指定のしかたを示む。指定するプラグマをHOGEとおくと、つぎのようになる。
+
+```hs
+instance {-# HOGE #-} context => C a b ... where
+```
+
+### OVERLAPPABLEプラグマ
+
+OVERLAPPABLEプラグマを指定されたインスタンス宣言はoverlappableである。
+
+### OVERLAPPINGプラグマ
+
+OVERLAPPINGプラグマを指定されたインスタンス宣言はoverlappingである。
+
+### OVERLAPSプラグマ
+
+OVERLAPSプラグマを指定されたインスタンス宣言はoverlappableであり、かつoverlappingである。
+
+### INCOHERENTプラグマ
+
+INCOHERENTプラグマを指定されたインスタンス宣言はoverlappableであり、overlappingであり、かつincoherentである。
+
+インスタンス宣言の選ばれかた
+----------------------------
+
+どのインスタンス宣言を使うかの決めかたを示す。
+
+* ターゲットになる型制約にマッチするインスタンス宣言を選び出し、
+	それらを候補とする。
+* つぎの条件を満たす候補IXを消す
+	+ より特定的な候補IYがある
+	+ IXがoverlappableである、またはIYがoverlappingである
+* ただひとつのincoherentでない候補が残ったら、それを選ぶ。
+	すべての候補がincoherentであれば任意のひとつを選ぶ。
+	そうでなければ(複数の候補がincoherentでない)ならば、エラーとなる
+* うえで選んだ候補がincoherentなら成功となり、その候補が選ばれる
+* うえで選んだ候補がincoherentでないなら、
+	ほかにユニファイできるインスタンス宣言がないことを確認する
+	+ ユニファイできるインスタンス宣言があれば、エラーとなる
+	+ そのようなインスタンス宣言がなければ、成功となり、その候補が選ばれる
+
+### マッチとユニファイについて
+
+うえで、すこしひっかかるのがマッチとユニファイだ。たとえば、つぎの定義を考える。
+
+```hs
+class Foo a b where
+        f :: a -> b -> String
+
+instance Foo (Boo Bool) b where
+        ...
+
+instance Foo (Boo Bool) Integer where
+        ...
+
+some :: Boo Bool -> b -> String
+some x y = f x y
+```
+
+関数someについて考えたとき、Foo (Boo Bool) bはマッチする。Foo (Boo Bool) Integerはマッチはしないが、ユニファイはできる。このような候補があるとき、incoherentでないインスタンス宣言を採用することは許されないということ(だと思う <- あとで、もっとよく調べること)。
+
+まとめ
+------
+
+FlexibleInstances拡張によって、より自由なインスタンス宣言を許すことで、「重複」という問題が生じる。
+
+「重複」を解決する自然な方法として、より特定的なインスタンス宣言による「上書き」がある。それを許す言語拡張がOverlappingInstances拡張だ。どちらも、「より特定的」と言えないような場合に、「どちらを選んでもいい」ようなことがある。そのようなときに任意のインスタンス宣言を選ぶようにするために、IncoherentInstances拡張がある。
+
+これらの「重複の許しかた」は本来インスタンス宣言が、それぞれ持つ性質だ。しかし言語拡張ではモジュール単位でしか指定できない。よって、現在ではこれらの言語拡張は推奨されず、より粒度を細かく指定できる「プラグマ」を使う方法が推奨されている。
