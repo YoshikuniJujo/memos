@@ -63,6 +63,8 @@ Freer Effectsが、だいたいわかった: 11-8 FlexibleContexts拡張
 Haskell標準での型制約
 ---------------------
 
+### NoDatatypeContexts周辺の話
+
 ### 標準とGHCのちがい
 
 ### 許される形
