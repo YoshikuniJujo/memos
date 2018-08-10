@@ -180,6 +180,36 @@ ENTER(closure)
 
 ...
 
+stg\_ap\_p\_fast以降の詳細
+--------------------------
+
+### BUILD\_PAP
+
+### stg\_bh\_upd\_frame\_info
+
+### stg\_marked\_upd\_frame
+
+### updateWithIndirection
+
+### return
+
+* returnによって呼び出しもとではなく
+	スタックトップに格納されたアドレスへ飛ぶ
+* スタックトップにはstg\_ap\_vがある
+	+ pushClosureで配置されていた
+
+### stg\_ap\_v
+
+* stg\_PAP\_applyを呼ぶ
+* R1にBUILD\_PAPで作成されたpapを入れる
+	+ StgPAP\_fun(pap) = GHC.TopHandler.runMainIO\_closure
+	+ StgPAP\_payload(pap,0) = c\_hello\_rq7\_closure+1
+
+### stg\_PAP\_apply
+
+* 最終的にはGHC.TopHandler.runMainIO\_closureに飛ぶ
+	+ この関数が複雑なので、より単純なものにさしかえる予定
+
 GCCのレジスタの使いかた
 -----------------------
 
