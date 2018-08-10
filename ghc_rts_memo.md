@@ -130,6 +130,54 @@ memo
 
 ### ENTER
 
+ENTER(closure)
+
+* LOAD\_INFO(ZCMain\_main\_closure)
+	+ %INFO\_PTRによって、値が読み出される
+	+ それが変数infoに代入される
+	+ その値はZCMain\_main\_info
+* jump %ENTRY\_CODE(info) (x)
+	+ 変数info(ZCMain\_main\_info)に飛ぶ
+	+ (x)は引数?、よくわからない
+
+### ZCMain\_main\_info
+
+* R2 = c\_hello\_rq7\_closure+1
+* R1 = GHC.TopHandler.runMainIO\_closure
+* call stg\_ap\_p\_fast(R2, R1)
+* R2への代入のときの(+1)は謎
+* おそらくc\_hello\_rq7という名前のクロージャに
+	runMainIOという関数を適用している
+
+### stg\_ap\_p\_fast
+
+* rts/dist/build/AutoApply.cmmに定義
+* AutoApply.cmmはutils/genapply/Main.hsによって自動生成される
+* たぶん、第1引数のクロージャに第2引数のクロージャを適用するのだと思う
+
+### runMainIO
+
+* Haskellの関数
+* 引数のIOの例外をすべてキャッチする
+
+### c\_hello\_rq7
+
+* c\_hello\_rq7\_closureにc\_hello\_rq7\_infoの値がある
+* c\_hello\_rq7\_infoに飛ぶのだと思う
+* c\_hello\_rq7\_infoからはMain.main\_info(Main\_main\_info)を呼び出している
+
+### Main\_main\_info
+
+* c\_hello1\_r1d8\_infoを呼び出している
+
+### c\_hello1\_r1d8\_info
+
+* 中心となるあたりは、つぎのような感じ
+	+ suspendThread
+	+ call hello
+	+ resumeThread
+* スレッドを中断してからCの関数helloを呼び、またスレッドを再開する感じ
+
 ...
 
 GCCのレジスタの使いかた
