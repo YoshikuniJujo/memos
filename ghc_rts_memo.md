@@ -210,6 +210,44 @@ stg\_ap\_p\_fast以降の詳細
 * 最終的にはGHC.TopHandler.runMainIO\_closureに飛ぶ
 	+ この関数が複雑なので、より単純なものにさしかえる予定
 
+runMainIOを単純化した場合
+-------------------------
+
+### stg\_ap\_p\_fast
+
+* R2 = c\_hell\_rq7\_closure+1
+* R1 = runMainIO\_Closure
+
+	R1 = R1 + 1
+	jump %GET_ENTRY(UNTAG(R1)) [R1, R2];
+
+### runMainIO
+
+* R1 = R2
+
+	call stg_ap_0_fast(R1) args: 8, res: 0, upd: 8;
+
+### stg\_ap\_0\_fast(fun)
+
+* ENTER(fun)
+	+ LOAD\_INFO
+		- ret(x)
+* return(fun)
+
+### stg\_ap\_v
+
+	jump %GET_ENTRY(R1-1) [R1]
+
+### rq7\_info
+
+* Main\_main\_info
+
+### r1dd\_info
+
+* call suspendThread
+* call hello
+* call resumeThread
+
 GCCのレジスタの使いかた
 -----------------------
 
