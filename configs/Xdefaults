@@ -1,0 +1,5 @@
+urxvt*background: black
+urxvt*foreground: snow
+urxvt*color12: #7799FF
+
+urxvt*saveLines: 0
