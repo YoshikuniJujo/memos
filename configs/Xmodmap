@@ -1,0 +1,13 @@
+keycode 102 = Meta_L
+keycode 100 = Meta_R
+
+remove mod1 = Meta_L
+remove mod1 = Alt_L
+remove mod1 = Alt_R
+
+add mod3 = Meta_R
+add mod3 = Meta_L
+remove mod3 = Alt_L
+remove mod3 = Alt_R
+add mod1 = Alt_L
+add mod1 = Alt_R
