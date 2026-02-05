@@ -1,0 +1,3 @@
+openssl ecparam -genkey -name secp256k1 -out privkey.pem
+openssl ec -in privkey.pem -outform DER | tail -c 32 > privkey.bin
+openssl ec -in privkey.pem -pubout -conv_form compressed -outform DER | tail -c 33 > pub.bin
